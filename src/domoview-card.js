@@ -145,6 +145,11 @@ export class DomoViewCard extends HTMLElement {
 
       this.renderer.onFrame = () => this.positionOverlays();
       this.applyAspect();
+      // The renderer sized itself during init, while the scene was still the
+      // default square. Re-size now that the aspect is applied rather than
+      // waiting for the ResizeObserver, whose first callback lands a frame or
+      // two later — long enough to paint one vertically squashed frame.
+      this.renderer.resize();
       this.buildOverlays();
       this.observeSize();
       this.update();

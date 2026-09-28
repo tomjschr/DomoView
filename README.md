@@ -10,7 +10,13 @@ windows, and the blinds you close actually darken the room behind them.
 
 > 🇩🇪 [Deutsche Version dieser Anleitung](README.de.md)
 
-![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images, driven by Home Assistant states.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
+![A three-room apartment with a balcony, rendered as an isometric cut-away. Rooms are lit by their own lamps, furniture and plants are modelled, and small chips show each room's temperature and humidity.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/hero-hand-modelled.webp)
+
+<sub>A **hand-modelled** home rendered live from its GLB, every lamp driven by a
+Home Assistant entity. This particular home is not in the repository: a pack is
+a measured floor plan of somewhere real, and that is a
+[deliberate decision](docs/sharing-packs.md) each author makes for themselves.
+Scroll down for what the Studio produces from a traced floor plan instead.</sub>
 
 ---
 
@@ -76,11 +82,7 @@ demo apartment is not your home, but it shows you exactly what the card does.
 Open **[DomoView Studio](https://tomjschr.github.io/DomoView/studio/)**
 in a browser. Nothing is uploaded; it all runs locally.
 
-```
-  Floor plan image  ──┐
-                      ├──▶  Studio  ──▶  model.glb + home.json  ──▶  the card
-  Photos per room   ──┘
-```
+![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images, driven by Home Assistant states.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
 
 1. **Plan** — drop in a floor plan (PNG/JPG; export a PDF page as an image first)
 2. **Scale** — click the two ends of something you know the length of, type the
@@ -104,6 +106,18 @@ in a browser. Nothing is uploaded; it all runs locally.
     **card YAML** that lists every fixture, blind, window contact and room to
     map, and your editable project file. Upload the folder into
     `/config/www/domoview/homes/<your-pack>/`.
+
+![The example apartment rendered by the card: walls with real window and door openings, floor slabs, furniture as simple blocks, and warm pools of light under each lamp.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/screenshot-studio-output.webp)
+
+<sub>**This is what the Studio produces**, and it is the honest comparison to
+make against the image at the top: walls with real openings at their measured
+sill and head heights, floor slabs, and furniture as blocks. Enough to read the
+home at a glance and to place every light where it belongs — the lighting,
+the sun and the blinds behave identically either way, because that is the
+card's job rather than the model's. If you want the look of the hero image,
+model your home in Blender and
+[bring your own GLB](docs/glb-conventions.md); the pack format keeps geometry
+and annotation separate precisely so that works.</sub>
 
 The Studio also runs offline from your own install once DomoView is
 installed: `/local/domoview/studio/index.html`.
