@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DomoView card demo</title>
+<meta name="color-scheme" content="dark">
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #0f171c;
+    color: #e7f0ee;
+    font: 14px/1.5 Inter, system-ui, -apple-system, sans-serif;
+  }
+  header { max-width: 1100px; margin: 0 auto 20px; }
+  h1 { margin: 0 0 4px; font-size: 20px; }
+  p { margin: 0; color: #9db3ae; }
+  .layout { max-width: 1100px; margin: 0 auto; display: grid; gap: 20px; }
+  .frame { border: 1px solid #273d47; border-radius: 12px; padding: 12px; background: #16232a; }
+  .frame h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #8aa5a0; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  button, select {
+    font: inherit; font-size: 13px; padding: 7px 12px;
+    border-radius: 8px; border: 1px solid #2d4450;
+    background: #1d2e38; color: inherit; cursor: pointer;
+  }
+  button.on { border-color: #4ecfae; color: #4ecfae; }
+  code { background: #0b1318; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .hint { margin-top: 16px; font-size: 12px; color: #8aa5a0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DomoView card demo</h1>
+  <p>The card rendering <code>examples/demo-apartment</code> against a stub Home Assistant.
+     No Home Assistant instance is involved.</p>
+</header>
+
+<div class="layout">
+  <div class="controls" id="controls"></div>
+  <div class="frame">
+    <h2>Live 3D renderer</h2>
+    <div id="live"></div>
+  </div>
+  <p class="hint">
+    Drag to orbit, scroll to zoom. <strong>Fixtures</strong> reveals the light markers;
+    click one to switch it. The preview strip below the scene scrubs time of day,
+    cloud cover and blinds.
+  </p>
+</div>
+
+<script type="module">
+import '../dist/domoview.js';
+
+/* A minimal stand-in for the `hass` object Lovelace hands to a card. It only
+ * needs to expose states, config and callService for the card to work. */
+const states = {
+  'sun.sun': { entity_id: 'sun.sun', state: 'above_horizon', attributes: { azimuth: 215, elevation: 32 } },
+  'weather.home': { entity_id: 'weather.home', state: 'partlycloudy', attributes: { cloud_coverage: 35, wind_speed: 11 } },
+};
+
+const PACK = '../examples/demo-apartment';
+const manifest = await (await fetch(`${PACK}/home.json`)).json();
+
+/* Bind every fixture to a synthetic light entity so the demo has something to
+ * switch, and give the windows covers. */
+const entities = {};
+const covers = {};
+const rooms = {};
+for (const fixture of manifest.fixtures) {
+  const id = `light.demo_${fixture.id}`;
+  entities[fixture.id] = id;
+  states[id] = {
+    entity_id: id,
+    state: 'off',
+    attributes: {
+      friendly_name: fixture.name,
+      brightness: 255,
+      supported_color_modes: ['color_temp', 'hs'],
+      rgb_color: fixture.light?.color ?? [255, 221, 164],
+    },
+  };
+}
+for (const opening of manifest.openings.filter(o => o.cover)) {
+  const id = `cover.demo_${opening.id}`;
+  covers[opening.id] = id;
+  states[id] = { entity_id: id, state: 'open', attributes: { current_position: 100, friendly_name: opening.name } };
+}
+for (const [index, room] of manifest.rooms.entries()) {
+  const temperature = `sensor.demo_${room.id}_temperature`;
+  const humidity = `sensor.demo_${room.id}_humidity`;
+  states[temperature] = { entity_id: temperature, state: String(20.5 + index * 0.4), attributes: { unit_of_measurement: '°C' } };
+  states[humidity] = { entity_id: humidity, state: String(44 + index * 2), attributes: { unit_of_measurement: '%' } };
+  rooms[room.id] = { temperature, humidity };
+}
+
+const hass = {
+  states,
+  language: navigator.language,
+  locale: { language: navigator.language.slice(0, 2) },
+  config: { latitude: 51.2, longitude: 6.8 },
+  callService(domain, service, data) {
+    const ids = [].concat(data.entity_id);
+    for (const id of ids) {
+      const state = states[id];
+      if (!state) continue;
+      if (service === 'turn_on') state.state = 'on';
+      if (service === 'turn_off') state.state = 'off';
+      if (data.brightness_pct != null) {
+        state.state = 'on';
+        state.attributes = { ...state.attributes, brightness: Math.round(data.brightness_pct / 100 * 255) };
+      }
+      if (service === 'set_cover_position') {
+        state.attributes = { ...state.attributes, current_position: data.position };
+      }
+    }
+    push();
+    return Promise.resolve();
+  },
+};
+
+const card = document.createElement('domoview-card');
+card.setConfig({
+  home: PACK,
+  renderer: 'live3d',
+  quality: 'high',
+  show_climate: true,
+  show_weather: true,
+  interactive: true,
+  entities, covers, rooms,
+  preview: { enabled: false },
+});
+document.querySelector('#live').append(card);
+
+function push() {
+  card.hass = { ...hass, states: { ...states } };
+}
+push();
+
+/* Demo-only controls, so the page is useful without a dashboard. */
+const controls = document.querySelector('#controls');
+
+function control(label, onClick) {
+  const node = document.createElement('button');
+  node.type = 'button';
+  node.textContent = label;
+  node.onclick = () => onClick(node);
+  controls.append(node);
+  return node;
+}
+
+control('All lights on', () => {
+  for (const id of Object.values(entities)) states[id].state = 'on';
+  push();
+});
+control('All lights off', () => {
+  for (const id of Object.values(entities)) states[id].state = 'off';
+  push();
+});
+control('Close blinds', () => {
+  for (const id of Object.values(covers)) states[id].attributes.current_position = 0;
+  push();
+});
+control('Open blinds', () => {
+  for (const id of Object.values(covers)) states[id].attributes.current_position = 100;
+  push();
+});
+
+const hour = document.createElement('select');
+hour.setAttribute('aria-label', 'Sun position');
+for (const [label, azimuth, elevation] of [
+  ['Morning', 100, 22], ['Midday', 180, 58], ['Afternoon', 240, 30],
+  ['Sunset', 280, 4], ['Night', 20, -18],
+]) {
+  const option = document.createElement('option');
+  option.value = `${azimuth},${elevation}`;
+  option.textContent = label;
+  if (label === 'Afternoon') option.selected = true;
+  hour.append(option);
+}
+hour.onchange = () => {
+  const [azimuth, elevation] = hour.value.split(',').map(Number);
+  states['sun.sun'].attributes = { azimuth, elevation };
+  states['sun.sun'].state = elevation > 0 ? 'above_horizon' : 'below_horizon';
+  push();
+};
+controls.append(hour);
+
+const weather = document.createElement('select');
+weather.setAttribute('aria-label', 'Weather');
+for (const condition of ['sunny', 'partlycloudy', 'cloudy', 'rainy', 'pouring', 'snowy']) {
+  const option = document.createElement('option');
+  option.value = condition;
+  option.textContent = condition;
+  if (condition === 'partlycloudy') option.selected = true;
+  weather.append(option);
+}
+weather.onchange = () => {
+  states['weather.home'].state = weather.value;
+  push();
+};
+controls.append(weather);
+</script>
+</body>
+</html>

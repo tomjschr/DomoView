@@ -1,0 +1,44 @@
+name: Feature or idea
+description: Something DomoView should be able to do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: The situation, not the solution. What does your home do that DomoView cannot show?
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: How you imagine it working
+      description: Optional. A YAML sketch of the card config, or of the pack fields it would need, helps a lot.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part
+      options:
+        - The card (rendering, interaction)
+        - The Home Pack format
+        - The Studio (authoring)
+        - The baked renderer or Blender bake
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Does it belong in the pack format?
+      description: |
+        DomoView has one hard rule: nothing in `src/` may know about any
+        particular home. If the idea is really "my home has X", it usually
+        becomes a field in the Home Pack format rather than code.
+      options:
+        - label: I think this is home-specific data, so probably a pack format field
+        - label: I think this is card behaviour, the same for every home
+        - label: Not sure, happy to discuss

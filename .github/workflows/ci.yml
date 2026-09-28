@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Validate example packs
+        run: |
+          shopt -s nullglob
+          packs=(examples/*/home.json)
+          if [ ${#packs[@]} -eq 0 ]; then
+            echo "no example packs found" >&2
+            exit 1
+          fi
+          node tools/pack/validate.mjs "${packs[@]}"
+
+      - name: Demo pack is reproducible from its project file
+        # The generator runs the Studio's own exporter. If this drifts, either
+        # the exporter changed behaviour or the committed pack is stale.
+        run: |
+          npm run demo
+          if ! git diff --quiet -- examples/; then
+            echo "::error::examples/ changed after regenerating. Run 'npm run demo' and commit the result."
+            git diff --stat -- examples/
+            exit 1
+          fi
+
+      - name: dist/ matches the sources
+        # HACS installs dist/domoview.js straight from the repository, so a
+        # stale bundle ships broken code to users.
+        run: |
+          if ! git diff --quiet -- dist/; then
+            echo "::error::dist/ is out of date. Run 'npm run build' and commit the result."
+            git diff --stat -- dist/
+            exit 1
+          fi
+
+      - name: Report bundle size
+        run: |
+          node -e "
+            const { gzipSync } = require('zlib');
+            const { readFileSync, statSync } = require('fs');
+            for (const file of ['dist/domoview.js', 'dist/studio/studio.js']) {
+              const bytes = readFileSync(file);
+              console.log(
+                file.padEnd(26),
+                (statSync(file).size / 1024).toFixed(1).padStart(8) + ' kB raw',
+                (gzipSync(bytes).length / 1024).toFixed(1).padStart(8) + ' kB gzip',
+              );
+            }
+          " >> "$GITHUB_STEP_SUMMARY"
+
+  hacs:
+    name: HACS validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
+        with:
+          category: plugin

@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to release (must already exist)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      - name: Check the tag matches package.json
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag $tag does not match package.json version $version"
+            exit 1
+          fi
+
+      - name: Package the Studio
+        run: |
+          cd dist && zip -r ../domoview-studio.zip studio -x '*.map'
+
+      - name: Package the example pack
+        run: zip -r domoview-demo-apartment.zip examples/demo-apartment
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          # HACS downloads the asset named in hacs.json in preference to the
+          # committed file, so domoview.js must be attached here.
+          files: |
+            dist/domoview.js
+            domoview-studio.zip
+            domoview-demo-apartment.zip
+          generate_release_notes: true
+          body: |
+            Install via HACS, or download `domoview.js` below and add it as a
+            dashboard resource.
+
+            `domoview-demo-apartment.zip` is a fictional example Home Pack —
+            unpack it into `/config/www/domoview/homes/` to see the card work
+            without modelling anything.
+
+            `domoview-studio.zip` is the authoring tool, if you would rather run
+            it locally than use the hosted copy.
+
+            See the [changelog](https://github.com/tomjschr/interactive_floormap/blob/main/CHANGELOG.md).

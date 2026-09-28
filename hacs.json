@@ -1,0 +1,8 @@
+{
+  "name": "DomoView",
+  "content_in_root": false,
+  "filename": "domoview.js",
+  "render_readme": true,
+  "homeassistant": "2024.8.0",
+  "hacs": "2.0.0"
+}

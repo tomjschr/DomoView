@@ -1,0 +1,480 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/schemas/home-pack-1.schema.json",
+  "title": "DomoView Home Pack v1",
+  "description": "Describes one home: its geometry source (GLB), rooms, openings, light fixtures and optional baked render assets. Everything home-specific lives here so the card itself stays generic.",
+  "type": "object",
+  "required": ["pack", "model"],
+  "additionalProperties": false,
+
+  "properties": {
+    "$schema": { "type": "string" },
+
+    "pack": {
+      "type": "object",
+      "required": ["id", "name", "schema"],
+      "additionalProperties": false,
+      "properties": {
+        "schema": { "const": 1, "description": "Home Pack format version." },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+          "description": "Stable slug. Also the folder name under www/domoview/homes/."
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "description": "Pack revision, semver recommended." },
+        "author": { "type": "string" },
+        "license": { "type": "string", "description": "SPDX id. Use CC0-1.0 or CC-BY-4.0 for shared packs." },
+        "description": { "type": "string" },
+        "homepage": { "type": "string", "format": "uri" },
+        "units": {
+          "enum": ["m"],
+          "default": "m",
+          "description": "All coordinates are metres. Other units are intentionally not supported."
+        },
+        "north": {
+          "type": "number",
+          "default": 0,
+          "minimum": -360,
+          "maximum": 360,
+          "description": "Degrees to rotate from the pack's +Y axis to geographic north. 0 means +Y points north. Solar and lunar azimuths are corrected by this value."
+        },
+        "createdWith": { "type": "string", "description": "Tool that produced the pack, e.g. 'domoview-studio 0.1.0'." }
+      }
+    },
+
+    "model": {
+      "type": "object",
+      "required": ["url"],
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "description": "Path to the glTF-Binary, relative to home.json." },
+        "up": {
+          "enum": ["Y", "Z"],
+          "default": "Z",
+          "description": "Which axis points up in the GLB. glTF mandates Y-up, but floor-plan tools commonly export Z-up; the renderer rotates accordingly."
+        },
+        "bounds": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "description": "World-space bounding box in pack coordinates. Used to frame cameras and to decode the baked position G-buffer.",
+          "properties": {
+            "min": { "$ref": "#/definitions/vec3" },
+            "max": { "$ref": "#/definitions/vec3" }
+          }
+        },
+        "exposure": { "type": "number", "default": 1, "description": "Tone-mapping exposure multiplier for the live renderer." },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Ambient/sky setup for the live renderer.",
+          "properties": {
+            "skyIntensity": { "type": "number", "default": 1 },
+            "groundColor": { "$ref": "#/definitions/color" },
+            "nightAmbient": { "type": "number", "default": 0.04 }
+          }
+        }
+      }
+    },
+
+    "cameras": {
+      "type": "array",
+      "description": "Named viewpoints offered in the card. The first entry, or the one flagged default, is used on load.",
+      "items": {
+        "type": "object",
+        "required": ["id", "azimuth", "elevation"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "name": { "type": "string" },
+          "type": { "enum": ["orthographic", "perspective"], "default": "orthographic" },
+          "azimuth": { "type": "number", "description": "Degrees clockwise from pack +Y." },
+          "elevation": { "type": "number", "minimum": 0, "maximum": 90, "description": "Degrees above the horizon. 90 is straight down." },
+          "target": { "$ref": "#/definitions/vec3", "description": "Look-at point. Defaults to the centre of model.bounds." },
+          "zoom": { "type": "number", "default": 1, "exclusiveMinimum": 0 },
+          "fov": { "type": "number", "default": 35, "description": "Perspective cameras only." },
+          "clip": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Hide geometry above this height so interiors stay visible. Mirrors the cut-away a doll-house view needs.",
+            "properties": { "above": { "type": "number" } }
+          },
+          "default": { "type": "boolean", "default": false }
+        }
+      }
+    },
+
+    "levels": {
+      "type": "array",
+      "description": "Storeys. Single-storey packs may omit this; one level named 'ground' is assumed.",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "name": { "type": "string" },
+          "elevation": { "type": "number", "default": 0, "description": "Floor height in metres." },
+          "height": { "type": "number", "default": 2.5, "description": "Floor-to-ceiling height." }
+        }
+      }
+    },
+
+    "rooms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "name": { "type": "string" },
+          "level": { "type": "string", "default": "ground" },
+          "polygon": {
+            "$ref": "#/definitions/polygon",
+            "description": "Floor outline, counter-clockwise. Drives per-room daylight, climate chips and room-scoped shading."
+          },
+          "label": { "$ref": "#/definitions/vec2", "description": "Where to anchor the room's climate chip. Defaults to the polygon centroid." },
+          "outdoor": { "type": "boolean", "default": false, "description": "Balconies and terraces: lit by the open sky rather than through openings." }
+        }
+      }
+    },
+
+    "walls": {
+      "type": "array",
+      "description": "Wall segments in plan. Openings reference them. Optional for packs whose GLB already carries final geometry.",
+      "items": {
+        "type": "object",
+        "required": ["id", "a", "b"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "a": { "$ref": "#/definitions/vec2" },
+          "b": { "$ref": "#/definitions/vec2" },
+          "thickness": { "type": "number", "default": 0.12, "exclusiveMinimum": 0 },
+          "height": { "type": "number", "default": 2.5, "exclusiveMinimum": 0 },
+          "level": { "type": "string", "default": "ground" },
+          "exterior": { "type": "boolean", "default": false },
+          "flip": { "type": "boolean", "default": false, "description": "Invert the outward normal when the traced direction runs the wrong way." }
+        }
+      }
+    },
+
+    "openings": {
+      "type": "array",
+      "description": "Windows, doors and glazed doors. Windows admit daylight and can carry a cover (blind/shutter) and a contact sensor.",
+      "items": {
+        "type": "object",
+        "required": ["id", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "type": { "enum": ["window", "door", "glass_door", "skylight"] },
+          "name": { "type": "string" },
+          "wall": { "type": "string", "description": "Wall id this opening sits in." },
+          "offset": { "type": "number", "description": "Centre distance along the wall from point a, in metres." },
+          "width": { "type": "number", "exclusiveMinimum": 0 },
+          "sill": { "type": "number", "default": 0, "description": "Lower edge above the level's floor." },
+          "head": { "type": "number", "description": "Upper edge above the level's floor." },
+          "rooms": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Rooms this opening lights. Usually one; a pass-through may list two."
+          },
+          "mullion": {
+            "type": ["number", "null"],
+            "default": null,
+            "description": "Distance from the opening's own centre to a vertical post that blocks light, in metres."
+          },
+          "normal": { "$ref": "#/definitions/vec2", "description": "Outward normal override. Derived from the wall when absent." },
+          "glass": { "$ref": "#/definitions/aabb", "description": "World-space bounds of the visible pane, used to confine rain and snow to actual glass." },
+          "cover": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "profile": { "type": "string", "default": "linear", "description": "Key into coverProfiles." },
+              "inFront": {
+                "type": "boolean",
+                "default": false,
+                "description": "True when the blind is seen in front of the pane from the pack's camera rather than behind it."
+              }
+            }
+          },
+          "outside": { "type": "boolean", "default": false, "description": "Seen from outside the building in the default camera." }
+        }
+      }
+    },
+
+    "coverProfiles": {
+      "type": "object",
+      "description": "Named blind/shutter response curves. Controllers rarely map position linearly to the visible opening, so a pack can measure its own curve.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "stops": {
+            "type": "array",
+            "minItems": 2,
+            "description": "[position 0-100, visible opening height in metres], ascending by position.",
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": { "type": "number" }
+            }
+          },
+          "slats": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Tiltable slats let light through a closed blind.",
+            "properties": {
+              "spacing": { "type": "number", "default": 0.064, "description": "Slat pitch in metres." },
+              "maxAperture": { "type": "number", "default": 0.32, "description": "Fraction of the pitch that opens at full tilt." },
+              "closedStops": {
+                "type": "array",
+                "description": "[position 0-100, aperture fraction] for controllers that leak light without a tilt channel.",
+                "items": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "fixtures": {
+      "type": "array",
+      "description": "Everything the card can bind to a Home Assistant entity and show a state for.",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "name": { "type": "string" },
+          "kind": {
+            "enum": ["light", "media", "cover", "sensor", "appliance", "vacuum", "speaker", "marker"],
+            "description": "Drives which HA domains are offered and how the state is visualised."
+          },
+          "room": { "type": "string" },
+          "node": { "type": "string", "description": "Name of the GLB node this fixture controls, for the live renderer." },
+          "domains": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Allowed HA domains for binding, e.g. ['light','switch']. Derived from kind when absent."
+          },
+          "emitters": {
+            "type": "array",
+            "description": "Actual light sources. The live renderer creates one three.js light per entry; the baked renderer draws one bulb glow per entry.",
+            "items": {
+              "type": "object",
+              "required": ["position"],
+              "additionalProperties": false,
+              "properties": {
+                "position": { "$ref": "#/definitions/vec3" },
+                "type": { "enum": ["point", "spot", "strip", "area", "emissive"], "default": "point" },
+                "target": { "$ref": "#/definitions/vec3", "description": "Spot lights only." },
+                "intensity": { "type": "number", "default": 1, "description": "Relative weight when a fixture has several emitters." },
+                "radius": { "type": "number", "default": 0.06 },
+                "angle": { "type": "number", "description": "Spot cone half-angle in degrees." },
+                "penumbra": { "type": "number", "default": 0.4 }
+              }
+            }
+          },
+          "light": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Photometric defaults, used when the entity reports no colour or brightness.",
+            "properties": {
+              "color": { "$ref": "#/definitions/color" },
+              "kelvin": { "type": "number", "description": "Correlated colour temperature fallback." },
+              "lumens": { "type": "number", "default": 600 },
+              "range": { "type": "number", "default": 6, "description": "Falloff distance in metres." },
+              "shadow": { "type": "boolean", "default": false, "description": "Cast a real-time shadow map. Costly; reserve for a few hero fixtures." }
+            }
+          },
+          "dimmable": { "type": "boolean", "description": "Hint only. The card still checks supported_color_modes at runtime." },
+          "screen": {
+            "$ref": "#/definitions/vec2",
+            "description": "Marker position as a percentage of the baked image, [x, y]. Only needed by the baked renderer; the live renderer projects the node instead."
+          },
+          "render": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "bulb": { "enum": ["glow", "strip", "none"], "default": "glow", "description": "Screen-space overlay style in the baked renderer." },
+              "scale": { "type": "number", "default": 1 },
+              "emissiveNodes": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "GLB nodes whose emissive material follows this fixture's state."
+              }
+            }
+          },
+          "variant": { "type": "string", "description": "Only present when this variant is active, e.g. 'christmas'." }
+        }
+      }
+    },
+
+    "occluders": {
+      "type": "array",
+      "description": "Axis-aligned boxes that block direct sun in the baked renderer. Furniture, parapets, planters.",
+      "items": { "$ref": "#/definitions/namedAabb" }
+    },
+
+    "shadowCasters": {
+      "type": "array",
+      "description": "Outdoor rails and fences projected as line shadows on terraces.",
+      "items": {
+        "type": "object",
+        "required": ["a", "b"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "a": { "$ref": "#/definitions/vec2" },
+          "b": { "$ref": "#/definitions/vec2" },
+          "heights": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "Horizontal rail heights in metres."
+          },
+          "postSpacing": { "type": "number", "default": 0.6 },
+          "postRadius": { "type": "number", "default": 0.023 },
+          "topHeight": { "type": "number", "default": 1 }
+        }
+      }
+    },
+
+    "variants": {
+      "type": "array",
+      "description": "Seasonal or alternative dressings, selectable in the card.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "name": { "type": "string" },
+          "model": { "type": "string", "description": "Replacement GLB. Omit to reuse the base model." },
+          "baked": { "type": "string", "description": "Replacement baked folder, relative to home.json." }
+        }
+      }
+    },
+
+    "baked": {
+      "type": "object",
+      "description": "Pre-rendered assets for the baked renderer. Absent packs work in live mode only.",
+      "required": ["size", "day", "night"],
+      "additionalProperties": false,
+      "properties": {
+        "size": { "type": "integer", "minimum": 256, "description": "Square edge length of every baked image." },
+        "camera": { "type": "string", "description": "Which camera id the bake was rendered from. Baked mode locks to it." },
+        "day": { "type": "string" },
+        "night": { "type": "string" },
+        "gbuffer": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "World position and normal per pixel, so runtime sun and moon can be projected without re-rendering.",
+          "properties": {
+            "position": { "type": "string" },
+            "normal": { "type": "string" },
+            "size": { "type": "integer", "description": "Edge length if it differs from baked.size." }
+          }
+        },
+        "masks": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "exterior": { "type": "string", "description": "White where the facade is seen from outside, so interior shading spares it." },
+            "glass": { "type": "string", "description": "White on visible panes; confines rain, snow and blinds." }
+          }
+        },
+        "lights": {
+          "type": "object",
+          "description": "fixture id to light-delta image. Added in linear light and scaled by brightness.",
+          "additionalProperties": { "type": "string" }
+        },
+        "surfaces": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Named plan polygons that receive weather effects.",
+          "properties": {
+            "wet": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/namedPolygon" },
+              "description": "Outdoor floors that darken in rain and whiten under snow."
+            }
+          }
+        }
+      }
+    },
+
+    "bindings": {
+      "type": "object",
+      "description": "Suggested default entity mapping. Normally empty in a shared pack; the installing user maps their own entities.",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+
+  "definitions": {
+    "vec2": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "number" }
+    },
+    "vec3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "type": "number" }
+    },
+    "color": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "type": "number", "minimum": 0, "maximum": 255 },
+      "description": "sRGB 0-255."
+    },
+    "polygon": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "$ref": "#/definitions/vec2" }
+    },
+    "aabb": {
+      "type": "object",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "$ref": "#/definitions/vec3" },
+        "max": { "$ref": "#/definitions/vec3" }
+      }
+    },
+    "namedAabb": {
+      "type": "object",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "min": { "$ref": "#/definitions/vec3" },
+        "max": { "$ref": "#/definitions/vec3" }
+      }
+    },
+    "namedPolygon": {
+      "type": "object",
+      "required": ["polygon"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "polygon": { "$ref": "#/definitions/polygon" },
+        "height": { "type": "number", "default": 0 }
+      }
+    }
+  }
+}

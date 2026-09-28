@@ -1,0 +1,1377 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/schemas/home-pack-1.schema.json",
+  "pack": {
+    "schema": 1,
+    "id": "demo-apartment",
+    "name": "Demo Apartment",
+    "version": "1.0.0",
+    "author": "DomoView contributors",
+    "license": "CC0-1.0",
+    "description": "A fictional six-room apartment with a west balcony, used to demonstrate DomoView. Not a real home.",
+    "units": "m",
+    "north": 0,
+    "createdWith": "domoview-studio 0.1.0"
+  },
+  "model": {
+    "url": "model.glb",
+    "up": "Y",
+    "bounds": {
+      "min": [
+        -6.5,
+        -4,
+        -0.25
+      ],
+      "max": [
+        6.5,
+        4,
+        2.7
+      ]
+    },
+    "environment": {
+      "groundColor": [
+        165,
+        130,
+        91
+      ]
+    }
+  },
+  "cameras": [
+    {
+      "id": "default",
+      "name": "Default view",
+      "type": "orthographic",
+      "azimuth": 215,
+      "elevation": 42,
+      "zoom": 1,
+      "default": true
+    }
+  ],
+  "levels": [
+    {
+      "id": "ground",
+      "name": "Ground floor",
+      "elevation": 0,
+      "height": 2.55
+    }
+  ],
+  "rooms": [
+    {
+      "id": "living_dining",
+      "name": "Living & Dining",
+      "level": "ground",
+      "polygon": [
+        [
+          -4.5,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          -1.2
+        ],
+        [
+          -4.5,
+          -1.2
+        ]
+      ]
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "level": "ground",
+      "polygon": [
+        [
+          1,
+          4
+        ],
+        [
+          6.5,
+          4
+        ],
+        [
+          6.5,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "corridor",
+      "name": "Corridor",
+      "level": "ground",
+      "polygon": [
+        [
+          1,
+          1
+        ],
+        [
+          3.5,
+          1
+        ],
+        [
+          3.5,
+          -1.2
+        ],
+        [
+          1,
+          -1.2
+        ]
+      ]
+    },
+    {
+      "id": "bathroom",
+      "name": "Bathroom",
+      "level": "ground",
+      "polygon": [
+        [
+          3.5,
+          1
+        ],
+        [
+          6.5,
+          1
+        ],
+        [
+          6.5,
+          -1.2
+        ],
+        [
+          3.5,
+          -1.2
+        ]
+      ]
+    },
+    {
+      "id": "study",
+      "name": "Study",
+      "level": "ground",
+      "polygon": [
+        [
+          -4.5,
+          -1.2
+        ],
+        [
+          1,
+          -1.2
+        ],
+        [
+          1,
+          -4
+        ],
+        [
+          -4.5,
+          -4
+        ]
+      ]
+    },
+    {
+      "id": "bedroom",
+      "name": "Bedroom",
+      "level": "ground",
+      "polygon": [
+        [
+          1,
+          -1.2
+        ],
+        [
+          6.5,
+          -1.2
+        ],
+        [
+          6.5,
+          -4
+        ],
+        [
+          1,
+          -4
+        ]
+      ]
+    },
+    {
+      "id": "balcony",
+      "name": "Balcony",
+      "level": "ground",
+      "polygon": [
+        [
+          -6.5,
+          3
+        ],
+        [
+          -4.6,
+          3
+        ],
+        [
+          -4.6,
+          -2
+        ],
+        [
+          -6.5,
+          -2
+        ]
+      ],
+      "outdoor": true
+    }
+  ],
+  "walls": [
+    {
+      "id": "w1",
+      "a": [
+        -4.5,
+        4
+      ],
+      "b": [
+        6.5,
+        4
+      ],
+      "thickness": 0.26,
+      "height": 2.55,
+      "exterior": true,
+      "flip": true
+    },
+    {
+      "id": "w2",
+      "a": [
+        6.5,
+        4
+      ],
+      "b": [
+        6.5,
+        -4
+      ],
+      "thickness": 0.26,
+      "height": 2.55,
+      "exterior": true,
+      "flip": true
+    },
+    {
+      "id": "w3",
+      "a": [
+        6.5,
+        -4
+      ],
+      "b": [
+        -4.5,
+        -4
+      ],
+      "thickness": 0.26,
+      "height": 2.55,
+      "exterior": true,
+      "flip": true
+    },
+    {
+      "id": "w4",
+      "a": [
+        -4.5,
+        -4
+      ],
+      "b": [
+        -4.5,
+        4
+      ],
+      "thickness": 0.26,
+      "height": 2.55,
+      "exterior": true,
+      "flip": true
+    },
+    {
+      "id": "w5",
+      "a": [
+        1,
+        4
+      ],
+      "b": [
+        1,
+        -4
+      ],
+      "thickness": 0.115,
+      "height": 2.55
+    },
+    {
+      "id": "w6",
+      "a": [
+        -4.5,
+        -1.2
+      ],
+      "b": [
+        6.5,
+        -1.2
+      ],
+      "thickness": 0.115,
+      "height": 2.55
+    },
+    {
+      "id": "w7",
+      "a": [
+        1,
+        1
+      ],
+      "b": [
+        6.5,
+        1
+      ],
+      "thickness": 0.115,
+      "height": 2.55
+    },
+    {
+      "id": "w8",
+      "a": [
+        3.5,
+        1
+      ],
+      "b": [
+        3.5,
+        -1.2
+      ],
+      "thickness": 0.115,
+      "height": 2.55
+    }
+  ],
+  "openings": [
+    {
+      "id": "living_room_west",
+      "type": "window",
+      "name": "Living room west",
+      "wall": "w4",
+      "offset": 6.5,
+      "width": 1.5,
+      "sill": 0.9,
+      "head": 2.3,
+      "rooms": [
+        "living_dining"
+      ],
+      "cover": {
+        "profile": "venetian"
+      },
+      "glass": {
+        "min": [
+          -4.52,
+          1.73,
+          0.9
+        ],
+        "max": [
+          -4.48,
+          3.27,
+          2.3
+        ]
+      }
+    },
+    {
+      "id": "balcony_door",
+      "type": "glass_door",
+      "name": "Balcony door",
+      "wall": "w4",
+      "offset": 4.5,
+      "width": 1.8,
+      "sill": 0.02,
+      "head": 2.3,
+      "rooms": [
+        "living_dining"
+      ],
+      "mullion": 0,
+      "cover": {
+        "profile": "venetian"
+      },
+      "glass": {
+        "min": [
+          -4.52,
+          -0.42,
+          0.02
+        ],
+        "max": [
+          -4.48,
+          1.42,
+          2.3
+        ]
+      }
+    },
+    {
+      "id": "study_west",
+      "type": "window",
+      "name": "Study west",
+      "wall": "w4",
+      "offset": 1.2,
+      "width": 1.2,
+      "sill": 0.9,
+      "head": 2.3,
+      "rooms": [
+        "study"
+      ],
+      "cover": {
+        "profile": "roller"
+      },
+      "glass": {
+        "min": [
+          -4.52,
+          -3.42,
+          0.9
+        ],
+        "max": [
+          -4.48,
+          -2.18,
+          2.3
+        ]
+      }
+    },
+    {
+      "id": "kitchen_north",
+      "type": "window",
+      "name": "Kitchen north",
+      "wall": "w1",
+      "offset": 8,
+      "width": 1.4,
+      "sill": 1.05,
+      "head": 2.3,
+      "rooms": [
+        "kitchen"
+      ],
+      "cover": {
+        "profile": "venetian"
+      },
+      "glass": {
+        "min": [
+          2.78,
+          3.98,
+          1.05
+        ],
+        "max": [
+          4.22,
+          4.02,
+          2.3
+        ]
+      }
+    },
+    {
+      "id": "bathroom_east",
+      "type": "window",
+      "name": "Bathroom east",
+      "wall": "w2",
+      "offset": 4.1,
+      "width": 0.8,
+      "sill": 1.35,
+      "head": 2.2,
+      "rooms": [
+        "bathroom"
+      ],
+      "glass": {
+        "min": [
+          6.48,
+          -0.52,
+          1.35
+        ],
+        "max": [
+          6.52,
+          0.32,
+          2.2
+        ]
+      }
+    },
+    {
+      "id": "bedroom_east",
+      "type": "window",
+      "name": "Bedroom east",
+      "wall": "w2",
+      "offset": 6.6,
+      "width": 1.6,
+      "sill": 0.9,
+      "head": 2.3,
+      "rooms": [
+        "bedroom"
+      ],
+      "cover": {
+        "profile": "roller"
+      },
+      "glass": {
+        "min": [
+          6.48,
+          -3.42,
+          0.9
+        ],
+        "max": [
+          6.52,
+          -1.78,
+          2.3
+        ]
+      }
+    },
+    {
+      "id": "bedroom_south",
+      "type": "window",
+      "name": "Bedroom south",
+      "wall": "w3",
+      "offset": 3.5,
+      "width": 1.6,
+      "sill": 0.9,
+      "head": 2.3,
+      "rooms": [
+        "bedroom"
+      ],
+      "cover": {
+        "profile": "roller"
+      },
+      "glass": {
+        "min": [
+          2.18,
+          -4.02,
+          0.9
+        ],
+        "max": [
+          3.82,
+          -3.98,
+          2.3
+        ]
+      }
+    },
+    {
+      "id": "study_south",
+      "type": "window",
+      "name": "Study south",
+      "wall": "w3",
+      "offset": 9,
+      "width": 1.4,
+      "sill": 0.9,
+      "head": 2.3,
+      "rooms": [
+        "study"
+      ],
+      "cover": {
+        "profile": "roller"
+      },
+      "glass": {
+        "min": [
+          -3.22,
+          -4.02,
+          0.9
+        ],
+        "max": [
+          -1.78,
+          -3.98,
+          2.3
+        ]
+      }
+    },
+    {
+      "id": "corridor_to_living",
+      "type": "door",
+      "name": "Corridor to living",
+      "wall": "w5",
+      "offset": 4.2,
+      "width": 0.9,
+      "sill": 0,
+      "head": 2.05,
+      "rooms": []
+    },
+    {
+      "id": "study_door",
+      "type": "door",
+      "name": "Study door",
+      "wall": "w6",
+      "offset": 2.5,
+      "width": 0.9,
+      "sill": 0,
+      "head": 2.05,
+      "rooms": []
+    },
+    {
+      "id": "bedroom_door",
+      "type": "door",
+      "name": "Bedroom door",
+      "wall": "w6",
+      "offset": 7,
+      "width": 0.9,
+      "sill": 0,
+      "head": 2.05,
+      "rooms": []
+    },
+    {
+      "id": "bathroom_door",
+      "type": "door",
+      "name": "Bathroom door",
+      "wall": "w8",
+      "offset": 1.2,
+      "width": 0.8,
+      "sill": 0,
+      "head": 2.05,
+      "rooms": []
+    },
+    {
+      "id": "kitchen_opening",
+      "type": "door",
+      "name": "Kitchen opening",
+      "wall": "w7",
+      "offset": 1.5,
+      "width": 1.1,
+      "sill": 0,
+      "head": 2.05,
+      "rooms": []
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "living_ceiling_spots",
+      "name": "Living ceiling spots",
+      "kind": "light",
+      "room": "living_dining",
+      "node": "dv_light_living_ceiling_spots",
+      "emitters": [
+        {
+          "position": [
+            -2.9,
+            2.6,
+            2.5
+          ],
+          "type": "spot",
+          "angle": 45,
+          "target": [
+            -2.9,
+            2.6,
+            0
+          ]
+        },
+        {
+          "position": [
+            -1.6,
+            1.7,
+            2.5
+          ],
+          "type": "spot",
+          "angle": 45,
+          "target": [
+            -1.6,
+            1.7,
+            0
+          ]
+        },
+        {
+          "position": [
+            -2.9,
+            0.6,
+            2.5
+          ],
+          "type": "spot",
+          "angle": 45,
+          "target": [
+            -2.9,
+            0.6,
+            0
+          ]
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          240,
+          212
+        ],
+        "lumens": 1400,
+        "range": 7,
+        "shadow": true
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "dining_pendant",
+      "name": "Dining pendant",
+      "kind": "light",
+      "room": "living_dining",
+      "node": "dv_light_dining_pendant",
+      "emitters": [
+        {
+          "position": [
+            -0.6,
+            -0.1,
+            1.75
+          ],
+          "type": "point"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          220,
+          168
+        ],
+        "lumens": 900,
+        "range": 5
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "living_floor_lamp",
+      "name": "Living floor lamp",
+      "kind": "light",
+      "room": "living_dining",
+      "node": "dv_light_living_floor_lamp",
+      "emitters": [
+        {
+          "position": [
+            -3.8,
+            -0.6,
+            1.5
+          ],
+          "type": "point"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          210,
+          154
+        ],
+        "lumens": 500,
+        "range": 4
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "living_tv",
+      "name": "Living TV",
+      "kind": "media",
+      "room": "living_dining",
+      "node": "dv_light_living_tv",
+      "emitters": [
+        {
+          "position": [
+            0.4,
+            2,
+            1.1
+          ],
+          "type": "emissive"
+        }
+      ],
+      "light": {
+        "color": [
+          182,
+          212,
+          255
+        ],
+        "lumens": 260,
+        "range": 3.5
+      },
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "kitchen_ceiling",
+      "name": "Kitchen ceiling",
+      "kind": "light",
+      "room": "kitchen",
+      "node": "dv_light_kitchen_ceiling",
+      "emitters": [
+        {
+          "position": [
+            2.8,
+            2.5,
+            2.5
+          ],
+          "type": "point"
+        },
+        {
+          "position": [
+            4.9,
+            2.5,
+            2.5
+          ],
+          "type": "point"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          246,
+          228
+        ],
+        "lumens": 1500,
+        "range": 6
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "kitchen_counter_led",
+      "name": "Kitchen counter LED",
+      "kind": "light",
+      "room": "kitchen",
+      "node": "dv_light_kitchen_counter_led",
+      "emitters": [
+        {
+          "position": [
+            1.9,
+            3.45,
+            1.45
+          ],
+          "type": "strip"
+        },
+        {
+          "position": [
+            3.4,
+            3.45,
+            1.45
+          ],
+          "type": "strip"
+        },
+        {
+          "position": [
+            4.9,
+            3.45,
+            1.45
+          ],
+          "type": "strip"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          236,
+          203
+        ],
+        "lumens": 400,
+        "range": 2.4
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "strip"
+      }
+    },
+    {
+      "id": "corridor_ceiling",
+      "name": "Corridor ceiling",
+      "kind": "light",
+      "room": "corridor",
+      "node": "dv_light_corridor_ceiling",
+      "emitters": [
+        {
+          "position": [
+            2.2,
+            -0.1,
+            2.5
+          ],
+          "type": "point"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          242,
+          220
+        ],
+        "lumens": 700,
+        "range": 4
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "bathroom_ceiling",
+      "name": "Bathroom ceiling",
+      "kind": "light",
+      "room": "bathroom",
+      "node": "dv_light_bathroom_ceiling",
+      "emitters": [
+        {
+          "position": [
+            4.9,
+            -0.1,
+            2.5
+          ],
+          "type": "point"
+        }
+      ],
+      "light": {
+        "color": [
+          246,
+          250,
+          255
+        ],
+        "lumens": 900,
+        "range": 4
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "bathroom_mirror_light",
+      "name": "Bathroom mirror light",
+      "kind": "light",
+      "room": "bathroom",
+      "node": "dv_light_bathroom_mirror_light",
+      "emitters": [
+        {
+          "position": [
+            3.85,
+            0.3,
+            1.85
+          ],
+          "type": "strip"
+        }
+      ],
+      "light": {
+        "color": [
+          238,
+          246,
+          255
+        ],
+        "lumens": 350,
+        "range": 2
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "strip"
+      }
+    },
+    {
+      "id": "bedroom_pendant",
+      "name": "Bedroom pendant",
+      "kind": "light",
+      "room": "bedroom",
+      "node": "dv_light_bedroom_pendant",
+      "emitters": [
+        {
+          "position": [
+            3.7,
+            -2.5,
+            2.15
+          ],
+          "type": "point"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          220,
+          168
+        ],
+        "lumens": 800,
+        "range": 5
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "bedside_lamp_left",
+      "name": "Bedside lamp left",
+      "kind": "light",
+      "room": "bedroom",
+      "node": "dv_light_bedside_lamp_left",
+      "emitters": [
+        {
+          "position": [
+            2,
+            -1.9,
+            0.62
+          ],
+          "type": "point"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          201,
+          140
+        ],
+        "lumens": 220,
+        "range": 2.4
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "bedside_lamp_right",
+      "name": "Bedside lamp right",
+      "kind": "light",
+      "room": "bedroom",
+      "node": "dv_light_bedside_lamp_right",
+      "emitters": [
+        {
+          "position": [
+            5.4,
+            -1.9,
+            0.62
+          ],
+          "type": "point"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          201,
+          140
+        ],
+        "lumens": 220,
+        "range": 2.4
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "study_ceiling",
+      "name": "Study ceiling",
+      "kind": "light",
+      "room": "study",
+      "node": "dv_light_study_ceiling",
+      "emitters": [
+        {
+          "position": [
+            -2.3,
+            -2.4,
+            2.5
+          ],
+          "type": "point"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          244,
+          224
+        ],
+        "lumens": 1100,
+        "range": 6
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "desk_lamp",
+      "name": "Desk lamp",
+      "kind": "light",
+      "room": "study",
+      "node": "dv_light_desk_lamp",
+      "emitters": [
+        {
+          "position": [
+            -0.1,
+            -2.2,
+            1.05
+          ],
+          "type": "spot",
+          "angle": 45,
+          "target": [
+            -0.1,
+            -2.2,
+            0
+          ]
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          240,
+          207
+        ],
+        "lumens": 320,
+        "range": 2.2
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "glow"
+      }
+    },
+    {
+      "id": "balcony_string_light",
+      "name": "Balcony string light",
+      "kind": "light",
+      "room": "balcony",
+      "node": "dv_light_balcony_string_light",
+      "emitters": [
+        {
+          "position": [
+            -6,
+            2,
+            2.1
+          ],
+          "type": "strip"
+        },
+        {
+          "position": [
+            -6,
+            0.5,
+            2.1
+          ],
+          "type": "strip"
+        },
+        {
+          "position": [
+            -6,
+            -1,
+            2.1
+          ],
+          "type": "strip"
+        }
+      ],
+      "light": {
+        "color": [
+          255,
+          217,
+          160
+        ],
+        "lumens": 260,
+        "range": 3
+      },
+      "dimmable": true,
+      "render": {
+        "bulb": "strip"
+      }
+    }
+  ],
+  "occluders": [
+    {
+      "name": "sofa",
+      "min": [
+        -4.2,
+        -0.9,
+        0
+      ],
+      "max": [
+        -1.5,
+        0.1,
+        0.82
+      ]
+    },
+    {
+      "name": "coffee_table",
+      "min": [
+        -3.3,
+        0.4,
+        0
+      ],
+      "max": [
+        -2.1,
+        1.1,
+        0.42
+      ]
+    },
+    {
+      "name": "dining_table",
+      "min": [
+        -1.3,
+        -0.7,
+        0
+      ],
+      "max": [
+        0.2,
+        0.5,
+        0.75
+      ]
+    },
+    {
+      "name": "tv_lowboard",
+      "min": [
+        0.1,
+        1.3,
+        0
+      ],
+      "max": [
+        0.8,
+        2.7,
+        0.48
+      ]
+    },
+    {
+      "name": "kitchen_counter",
+      "min": [
+        1.2,
+        3.25,
+        0
+      ],
+      "max": [
+        6.3,
+        3.85,
+        0.92
+      ]
+    },
+    {
+      "name": "fridge",
+      "min": [
+        5.7,
+        2.4,
+        0
+      ],
+      "max": [
+        6.35,
+        3.1,
+        1.85
+      ]
+    },
+    {
+      "name": "bed",
+      "min": [
+        2.6,
+        -3.5,
+        0
+      ],
+      "max": [
+        4.8,
+        -1.5,
+        0.58
+      ]
+    },
+    {
+      "name": "wardrobe",
+      "min": [
+        1.2,
+        -3.8,
+        0
+      ],
+      "max": [
+        1.8,
+        -1.4,
+        2.2
+      ]
+    },
+    {
+      "name": "desk",
+      "min": [
+        -0.9,
+        -2.6,
+        0
+      ],
+      "max": [
+        0.8,
+        -1.9,
+        0.74
+      ]
+    },
+    {
+      "name": "bookshelf",
+      "min": [
+        -4.35,
+        -3.6,
+        0
+      ],
+      "max": [
+        -3.9,
+        -1.4,
+        1.9
+      ]
+    },
+    {
+      "name": "bathtub",
+      "min": [
+        3.7,
+        -1.05,
+        0
+      ],
+      "max": [
+        6.3,
+        -0.6,
+        0.55
+      ]
+    },
+    {
+      "name": "balcony_table",
+      "min": [
+        -6.15,
+        0,
+        0
+      ],
+      "max": [
+        -5.05,
+        0.9,
+        0.74
+      ]
+    },
+    {
+      "name": "planter",
+      "min": [
+        -6.3,
+        2.1,
+        0
+      ],
+      "max": [
+        -5.8,
+        2.8,
+        0.65
+      ]
+    }
+  ],
+  "bindings": {},
+  "shadowCasters": [
+    {
+      "id": "rail_west",
+      "a": [
+        -6.5,
+        -2
+      ],
+      "b": [
+        -6.5,
+        3
+      ],
+      "heights": [
+        0.42,
+        0.72,
+        1.02
+      ],
+      "topHeight": 1.05,
+      "postSpacing": 0.62,
+      "postRadius": 0.022
+    },
+    {
+      "id": "rail_south",
+      "a": [
+        -6.5,
+        -2
+      ],
+      "b": [
+        -4.6,
+        -2
+      ],
+      "heights": [
+        0.42,
+        0.72,
+        1.02
+      ],
+      "topHeight": 1.05,
+      "postSpacing": 0.62,
+      "postRadius": 0.022
+    },
+    {
+      "id": "rail_north",
+      "a": [
+        -6.5,
+        3
+      ],
+      "b": [
+        -4.6,
+        3
+      ],
+      "heights": [
+        0.42,
+        0.72,
+        1.02
+      ],
+      "topHeight": 1.05,
+      "postSpacing": 0.62,
+      "postRadius": 0.022
+    }
+  ]
+}

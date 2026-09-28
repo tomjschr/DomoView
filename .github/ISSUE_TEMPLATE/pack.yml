@@ -1,0 +1,60 @@
+name: Share a Home Pack
+description: Offer a pack for others to use or fork
+title: 'Pack: '
+labels: [home-pack]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you — a shared pack saves the next person an evening.
+
+        **Please read [sharing packs](https://github.com/tomjschr/interactive_floormap/blob/main/docs/sharing-packs.md) first.**
+        A pack is a measured floor plan of a dwelling with its furniture and
+        lighting. Publishing one is a reasonable thing to do; it is worth being
+        a deliberate choice rather than an accident.
+
+  - type: input
+    id: what
+    attributes:
+      label: What kind of home
+      placeholder: Three-room flat, 78 m², single storey, west-facing balcony
+    validations:
+      required: true
+
+  - type: input
+    id: where
+    attributes:
+      label: Where is it
+      description: A link to a repository, a release, or an offer to open a PR here.
+    validations:
+      required: true
+
+  - type: input
+    id: license
+    attributes:
+      label: License
+      placeholder: CC0-1.0
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: '`node tools/pack/validate.mjs <pack>` passes'
+          required: true
+        - label: '`bindings` is empty — no entity ids of mine in it'
+          required: true
+        - label: No reference photos included, or only ones I meant to include
+          required: true
+        - label: I have read the sharing guidance and I am happy for this to be public
+          required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything worth knowing
+      placeholder: |
+        Baked assets included. The venetian profile is measured from a Shelly 2.5
+        and might suit others with the same controller.

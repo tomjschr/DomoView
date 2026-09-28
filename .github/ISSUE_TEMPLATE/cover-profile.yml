@@ -1,0 +1,85 @@
+name: Contribute a cover profile
+description: Measurements for a blind or shutter that does not open linearly
+title: 'Cover profile: '
+labels: [cover-profile, good first issue]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Most blind controllers do **not** map their reported position onto how
+        much glass is actually clear. A shutter at 50 % is often still nearly
+        shut. DomoView can model that — but only from real measurements, and
+        only you have the blind.
+
+        Contributing ten numbers here helps everyone with the same hardware.
+
+        ### How to measure
+
+        For one window, at each position below:
+
+        1. Send the cover to that position and wait for it to settle
+        2. Measure from the **sill** to the **bottom edge of the blind**
+        3. Divide by the total opening height (sill to head)
+
+        So a window 1.40 m tall with the blind 0.35 m above the sill is `0.25`.
+
+  - type: input
+    id: hardware
+    attributes:
+      label: What hardware
+      placeholder: Somfy io roller shutter / Shelly 2.5 with a generic venetian blind
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options: [Venetian blind (tiltable slats), Roller shutter, Roller blind (fabric), Pleated / honeycomb, Other]
+    validations:
+      required: true
+
+  - type: input
+    id: opening
+    attributes:
+      label: Total opening height
+      placeholder: 1.40 m (sill to head)
+    validations:
+      required: true
+
+  - type: textarea
+    id: measurements
+    attributes:
+      label: Measurements
+      description: Clear fraction at each position. Leave out any you could not measure.
+      value: |
+        position | clear fraction
+        ---------|---------------
+        0        |
+        10       |
+        20       |
+        30       |
+        40       |
+        50       |
+        60       |
+        70       |
+        80       |
+        90       |
+        100      |
+    validations:
+      required: true
+
+  - type: textarea
+    id: slats
+    attributes:
+      label: Slats, if it has them
+      description: |
+        - Slat pitch in metres (measure ten slats and divide)
+        - Does the entity report `current_tilt_position`?
+        - Does light leak through when it reports 0 %, and at what positions?
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      placeholder: Reports position inverted; 0 is fully open on this controller.
