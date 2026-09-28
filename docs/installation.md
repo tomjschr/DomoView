@@ -18,7 +18,7 @@ baked assets.
 DomoView is not yet in the default HACS list, so add it as a custom repository:
 
 1. **HACS → ⋮ (top right) → Custom repositories**
-2. URL: `https://github.com/tomjschr/interactive_floormap`
+2. URL: `https://github.com/tomjschr/DomoView`
 3. Category: **Dashboard**
 4. **Add**, then find **DomoView** in HACS and install it
 5. **Reload your browser fully** (Ctrl/Cmd + Shift + R)
@@ -28,7 +28,7 @@ HACS adds the dashboard resource for you.
 ### Manually
 
 1. Download `domoview.js` from the
-   [latest release](https://github.com/tomjschr/interactive_floormap/releases)
+   [latest release](https://github.com/tomjschr/DomoView/releases)
 2. Copy it to `/config/www/domoview/domoview.js`
 3. **Settings → Dashboards → ⋮ → Resources → + Add resource**
    - URL: `/local/domoview/domoview.js`
@@ -55,10 +55,10 @@ which the browser sees as `/local/domoview/homes/<pack-id>/`.
 
 ```bash
 # in /config/www/domoview/homes/
-wget https://github.com/tomjschr/interactive_floormap/archive/refs/heads/main.zip
-unzip main.zip 'interactive_floormap-main/examples/demo-apartment/*'
-mv interactive_floormap-main/examples/demo-apartment .
-rm -rf main.zip interactive_floormap-main
+wget https://github.com/tomjschr/DomoView/archive/refs/heads/main.zip
+unzip main.zip 'DomoView-main/examples/demo-apartment/*'
+mv DomoView-main/examples/demo-apartment .
+rm -rf main.zip DomoView-main
 ```
 
 Or just download the repository and copy `examples/demo-apartment` across with
@@ -66,7 +66,7 @@ the File Editor or Samba add-on.
 
 ### Your own pack
 
-Build one in [DomoView Studio](https://tomjschr.github.io/interactive_floormap/studio/)
+Build one in [DomoView Studio](https://tomjschr.github.io/DomoView/studio/)
 and unpack the exported ZIP into `/config/www/domoview/homes/`. The ZIP already
 contains the correctly-named folder. See
 [Authoring from photos](authoring-from-photos.md).
@@ -142,8 +142,8 @@ If something is not working and you want to know whether the problem is the
 card or the setup, run the repository locally:
 
 ```bash
-git clone https://github.com/tomjschr/interactive_floormap
-cd interactive_floormap
+git clone https://github.com/tomjschr/DomoView
+cd DomoView
 npm install && npm run build
 node tools/serve.mjs
 ```

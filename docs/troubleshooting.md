@@ -163,8 +163,8 @@ You asked for `renderer: baked` on a pack that only has a GLB. Use
 The fastest way to tell a pack problem from a Home Assistant problem:
 
 ```bash
-git clone https://github.com/tomjschr/interactive_floormap
-cd interactive_floormap && npm install && npm run build
+git clone https://github.com/tomjschr/DomoView
+cd DomoView && npm install && npm run build
 node tools/pack/validate.mjs /path/to/your/pack
 node tools/serve.mjs
 ```

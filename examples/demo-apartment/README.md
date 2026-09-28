@@ -89,7 +89,7 @@ renderer, bake it — see [tools/bake/README.md](../../tools/bake/README.md).
 
 ## Editing it
 
-Open <https://tomjschr.github.io/interactive_floormap/studio/>, use
+Open <https://tomjschr.github.io/DomoView/studio/>, use
 **Open…** and pick `project.domoview.json`. Change what you like and export.
 It is a reasonable starting point if your own home is a similar shape — and
 forking a pack is much faster than tracing one.

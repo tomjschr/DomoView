@@ -128,7 +128,7 @@ export function buildManifest(data, { version = '0.1.0', modelFile = 'model.glb'
   } : undefined;
 
   const manifest = {
-    $schema: 'https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/schemas/home-pack-1.schema.json',
+    $schema: 'https://raw.githubusercontent.com/tomjschr/DomoView/main/schemas/home-pack-1.schema.json',
     pack: {
       schema: SCHEMA_VERSION,
       id: slugify(data.meta.id || data.meta.name, 'home'),

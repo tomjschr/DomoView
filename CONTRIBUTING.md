@@ -17,7 +17,7 @@ window has to be traced as three walls. Please write those down.
 - **A measured cover profile.** If your blinds do not open linearly, measure
   the clear opening at a few positions and open an issue with the numbers. We
   add it to `coverProfiles` as a named profile everyone can pick.
-  → [Cover profile issue template](https://github.com/tomjschr/interactive_floormap/issues/new?template=cover-profile.yml)
+  → [Cover profile issue template](https://github.com/tomjschr/DomoView/issues/new?template=cover-profile.yml)
 - **A fixture recipe.** Lumens, colour and emitter layout that make a common
   fixture type read correctly.
 - **A pack.** See *Contributing a Home Pack* below.
@@ -49,8 +49,8 @@ issue if you would rather host it yourself.
 ### Setup
 
 ```bash
-git clone https://github.com/tomjschr/interactive_floormap
-cd interactive_floormap
+git clone https://github.com/tomjschr/DomoView
+cd DomoView
 npm install
 
 npm run build          # dist/domoview.js and dist/studio/
