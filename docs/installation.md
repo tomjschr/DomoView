@@ -90,18 +90,30 @@ For a full-width scene, put the card alone in a **Panel** view.
 
 ---
 
-## The Studio, offline
+## Running the Studio
 
-A DomoView install contains its own copy of the Studio:
+Three ways, all the same application, none of which upload anything:
+
+**On your own machine.** Download `domoview-studio.zip` from the
+[latest release](https://github.com/tomjschr/DomoView/releases), unzip it and
+run `node serve.mjs` in that folder, then open the address it prints. Needs
+[Node.js](https://nodejs.org) 20 or newer. This is the one to pick if you are
+going to be uploading files into Home Assistant anyway.
+
+**From your own Home Assistant.** A DomoView install contains its own copy:
 
 ```
 /local/domoview/studio/index.html
 ```
 
-(available when installed via HACS or when you copy `dist/studio/` alongside
-`domoview.js`). Useful when the machine with the floor plan on it is not the
-one with internet access. It is identical to the hosted version, and neither
-uploads anything.
+available when installed via HACS, or when you copy `dist/studio/` alongside
+`domoview.js`.
+
+**Hosted.** <https://tomjschr.github.io/DomoView/studio/> — nothing to install.
+
+> Double-clicking `index.html` does not work, whichever copy you have.
+> Browsers refuse to load ES modules straight off the filesystem, which is why
+> the downloadable version ships a small server that listens on localhost only.
 
 ---
 
