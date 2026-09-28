@@ -46,7 +46,7 @@ jobs:
           sed -i "s|'../examples/demo-apartment'|'./examples/demo-apartment'|" site/index.html
 
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
