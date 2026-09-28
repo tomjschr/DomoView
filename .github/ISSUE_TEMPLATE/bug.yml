@@ -1,0 +1,86 @@
+name: Bug report
+description: Something renders wrong, or does not work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: the [troubleshooting guide](https://github.com/tomjschr/interactive_floormap/blob/main/docs/troubleshooting.md)
+        covers the common cases — a black home usually means no entities are
+        bound yet, and sun in the wrong rooms usually means `pack.north`.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: And what you expected instead. A screenshot is worth a lot here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce
+      placeholder: |
+        1. Load the pack
+        2. Switch on the kitchen light
+        3. The light appears in the hall instead
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: DomoView version
+      description: The console logs it on load, e.g. "DOMOVIEW 0.1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: renderer
+    attributes:
+      label: Renderer
+      options: [auto (live 3D), auto (fell back to baked), live3d, baked, not sure]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: quality
+    attributes:
+      label: Quality
+      options: [low, medium, high, not set]
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Card configuration
+      description: With entity ids removed if you prefer.
+      render: yaml
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console output
+      description: F12 → Console. Anything beginning "DomoView:" is especially useful.
+      render: text
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and device
+      placeholder: Companion app on an iPad 6th gen / Firefox 130 on Windows
+    validations:
+      required: true
+
+  - type: textarea
+    id: pack
+    attributes:
+      label: The Home Pack
+      description: |
+        A renderer bug is far easier to fix with the pack that triggers it. A
+        cut-down pack containing just the one broken window is ideal.
+
+        If the pack is of your actual home and you would rather not post it,
+        say so — we can usually narrow it down from the numbers for the one
+        room involved. Please do not attach anything you are not comfortable
+        making public; issues are world-readable.

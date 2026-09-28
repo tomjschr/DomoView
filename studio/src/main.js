@@ -1,0 +1,507 @@
+/* DomoView Studio.
+ *
+ * Turns a floor plan image and a set of room photos into a Home Pack: a GLB
+ * plus a home.json the card can read. Everything runs in the browser; nothing
+ * is uploaded anywhere.
+ */
+
+import { Project, projectStatus, slugify } from './project.js';
+import { Viewport } from './viewport.js';
+import { PlanRenderer } from './render2d.js';
+import { Editor } from './editor.js';
+import { renderInspector, renderOutline, planSummary } from './panels.js';
+import { PhotoShelf, colourTargetMenu } from './photos.js';
+import { Preview3D } from './preview3d.js';
+import { buildManifest } from './export/manifest.js';
+import { exportGlb, sceneStats } from './export/glb.js';
+import { createZip, downloadBlob } from './export/zip.js';
+import {
+  el, button, group, field, askNumber, toast,
+  readFileAsDataUrl, normaliseImage,
+} from './ui.js';
+
+const STUDIO_VERSION = '0.1.0';
+const STORAGE_KEY = 'domoview.studio.project';
+
+/** Each step binds a canvas tool and a short instruction. */
+const STEPS = [
+  { id: 'plan', label: 'Plan', tool: 'select' },
+  { id: 'scale', label: 'Scale', tool: 'calibrate' },
+  { id: 'walls', label: 'Walls', tool: 'wall' },
+  { id: 'rooms', label: 'Rooms', tool: 'room' },
+  { id: 'openings', label: 'Windows', tool: 'window' },
+  { id: 'lights', label: 'Lights', tool: 'light' },
+  { id: 'furniture', label: 'Furniture', tool: 'furniture' },
+  { id: 'photos', label: 'Photos', tool: 'select' },
+  { id: 'preview', label: 'Preview', tool: 'select' },
+  { id: 'export', label: 'Export', tool: 'select' },
+];
+
+class Studio {
+  constructor(root) {
+    this.root = root;
+    this.project = restoreProject();
+    this.step = 'plan';
+    this.build();
+    this.project.subscribe(() => this.onProjectChange());
+    this.setStep('plan');
+    this.loadBackdrop();
+  }
+
+  build() {
+    this.root.replaceChildren();
+
+    this.canvas = el('canvas', { class: 'plan-canvas', tabIndex: 0 });
+    this.previewHost = el('div', { class: 'preview-host', hidden: true });
+    this.stage = el('div', { class: 'stage' }, [this.canvas, this.previewHost]);
+
+    this.outlineHost = el('div', { class: 'outline' });
+    this.inspectorHost = el('div', { class: 'inspector' });
+    this.stepPanelHost = el('div', { class: 'step-panel' });
+    this.hintNode = el('p', { class: 'hint' });
+    this.summaryNode = el('p', { class: 'summary' });
+
+    this.stepsNav = el('nav', { class: 'steps', 'aria-label': 'Authoring steps' },
+      STEPS.map(step => button(step.label, () => this.setStep(step.id), {
+        class: 'step', dataset: { step: step.id },
+      })));
+
+    this.root.append(
+      el('header', { class: 'topbar' }, [
+        el('div', { class: 'brand' }, [
+          el('strong', {}, 'DomoView Studio'),
+          el('span', { class: 'version' }, STUDIO_VERSION),
+        ]),
+        el('div', { class: 'topbar-actions' }, [
+          button('New', () => this.newProject(), { class: 'ghost' }),
+          button('Open…', () => this.openProject(), { class: 'ghost' }),
+          button('Save project', () => this.saveProject(), { class: 'ghost' }),
+          button('Undo', () => this.project.undo(), { class: 'ghost', title: 'Ctrl+Z' }),
+          button('Redo', () => this.project.redo(), { class: 'ghost', title: 'Ctrl+Shift+Z' }),
+          button('Export pack', () => { this.setStep('export'); }, { class: 'primary' }),
+        ]),
+      ]),
+      this.stepsNav,
+      el('main', { class: 'workspace' }, [
+        el('aside', { class: 'column left' }, [
+          el('h2', {}, 'Outline'),
+          this.outlineHost,
+        ]),
+        this.stage,
+        el('aside', { class: 'column right' }, [
+          this.stepPanelHost,
+          this.inspectorHost,
+        ]),
+      ]),
+      el('footer', { class: 'statusbar' }, [this.hintNode, this.summaryNode]),
+    );
+
+    this.viewport = new Viewport(this.canvas);
+    this.viewport.attach();
+    this.renderer = new PlanRenderer(this.canvas, this.viewport);
+    this.viewport.onChange = () => this.draw();
+
+    this.editor = new Editor({
+      canvas: this.canvas,
+      viewport: this.viewport,
+      project: this.project,
+      onRedraw: () => this.draw(),
+      onSelect: () => this.renderSide(),
+      onAskDistance: pixels => askNumber({
+        title: 'Calibrate scale',
+        message: `How long is that line in reality? It measures ${Math.round(pixels)} plan pixels.`,
+        unit: 'm',
+        initial: '',
+      }),
+      onStatus: status => {
+        if (status?.error) toast(status.error, 'warn');
+        else if (typeof status === 'string') this.hintNode.textContent = status;
+      },
+    });
+
+    this.photos = new PhotoShelf({
+      project: this.project,
+      container: el('div'),
+      onPickColor: (hex, photo) => this.showColourMenu(hex, photo),
+    });
+
+    this.preview = new Preview3D({
+      project: this.project,
+      container: this.previewHost,
+      controls: el('div', { class: 'preview-controls' }),
+    });
+
+    this.observer = new ResizeObserver(() => {
+      this.renderer.resize();
+      this.draw();
+      this.preview.resize();
+    });
+    this.observer.observe(this.stage);
+
+    this.installDropTarget();
+    this.installShortcuts();
+  }
+
+  // -- steps ---------------------------------------------------------------
+
+  setStep(id) {
+    const step = STEPS.find(entry => entry.id === id) || STEPS[0];
+    this.step = step.id;
+    for (const node of this.stepsNav.children) {
+      node.classList.toggle('active', node.dataset.step === step.id);
+    }
+    const previewing = step.id === 'preview';
+    this.previewHost.hidden = !previewing;
+    this.canvas.hidden = previewing;
+    this.editor.setTool(step.tool);
+    if (previewing) {
+      this.preview.renderControls();
+      if (this.preview.stale) this.preview.refresh();
+    }
+    this.renderSide();
+    this.hintNode.textContent = this.editor.hint();
+    if (!previewing) {
+      this.renderer.resize();
+      this.draw();
+    }
+  }
+
+  renderSide() {
+    this.stepPanelHost.replaceChildren(this.stepPanel());
+    renderInspector(this.inspectorHost, {
+      project: this.project,
+      editor: this.editor,
+      selected: this.editor.selected,
+      onPlanImage: file => this.setPlanImage(file),
+    });
+    renderOutline(this.outlineHost, { project: this.project, editor: this.editor });
+    this.summaryNode.textContent = planSummary(this.project.data);
+  }
+
+  stepPanel() {
+    switch (this.step) {
+      case 'photos':
+        this.photos.container = el('div', { class: 'photo-shelf' });
+        this.photos.render();
+        return group('Photos', [this.photos.container]);
+      case 'preview':
+        return group('Preview', [this.preview.controls]);
+      case 'export':
+        return this.exportPanel();
+      case 'openings':
+        return group('Windows and doors', [
+          el('p', { class: 'note' },
+            'Click on a wall to place a window. Switch the tool to Door in the panel below, or press D.'),
+          el('div', { class: 'preview-actions' }, [
+            button('Window tool', () => this.editor.setTool('window'),
+              { class: this.editor.tool === 'window' ? 'primary' : 'ghost' }),
+            button('Door tool', () => this.editor.setTool('door'),
+              { class: this.editor.tool === 'door' ? 'primary' : 'ghost' }),
+          ]),
+        ]);
+      case 'scale':
+        return group('Scale', [
+          el('p', { class: 'note' },
+            'Click the two ends of something you know the length of — a door is usually 0.90 m, a room wall is better if you have a measurement.'),
+          this.project.data.plan.scale
+            ? button('Re-calibrate', () => this.editor.setTool('calibrate'), { class: 'ghost' })
+            : null,
+        ]);
+      default:
+        return group(STEPS.find(step => step.id === this.step)?.label || '', [
+          el('p', { class: 'note' }, this.editor.hint()),
+        ]);
+    }
+  }
+
+  // -- plan image ----------------------------------------------------------
+
+  async setPlanImage(file) {
+    try {
+      const raw = await readFileAsDataUrl(file);
+      const { dataUrl, width, height } = await normaliseImage(raw);
+      this.project.commit('load plan', data => {
+        data.plan.image = dataUrl;
+        data.plan.imageWidth = width;
+        data.plan.imageHeight = height;
+      });
+      await this.loadBackdrop();
+      this.viewport.fit(width, height);
+      if (!this.project.data.plan.scale) {
+        toast('Plan loaded. Calibrate the scale next.', 'info');
+        this.setStep('scale');
+      }
+    } catch (error) {
+      toast(error.message, 'error');
+    }
+  }
+
+  async loadBackdrop() {
+    const data = this.project.data;
+    try {
+      await this.renderer.setBackdrop(data.plan.image);
+    } catch (error) {
+      toast(error.message, 'error');
+    }
+    this.renderer.resize();
+    if (data.plan.imageWidth) this.viewport.fit(data.plan.imageWidth, data.plan.imageHeight);
+    this.draw();
+  }
+
+  installDropTarget() {
+    const stop = event => { event.preventDefault(); event.stopPropagation(); };
+    for (const type of ['dragenter', 'dragover', 'dragleave', 'drop']) {
+      this.stage.addEventListener(type, stop);
+    }
+    this.stage.addEventListener('dragover', () => this.stage.classList.add('dropping'));
+    this.stage.addEventListener('dragleave', () => this.stage.classList.remove('dropping'));
+    this.stage.addEventListener('drop', event => {
+      this.stage.classList.remove('dropping');
+      const files = [...(event.dataTransfer?.files || [])];
+      if (!files.length) return;
+      const project = files.find(file => file.name.endsWith('.json'));
+      if (project) { this.readProjectFile(project); return; }
+      if (this.step === 'photos') this.photos.add(files);
+      else this.setPlanImage(files[0]);
+    });
+  }
+
+  installShortcuts() {
+    window.addEventListener('keydown', event => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const map = {
+        v: 'select', c: 'calibrate', w: 'wall', r: 'room',
+        n: 'window', d: 'door', l: 'light', f: 'furniture',
+      };
+      const tool = map[event.key.toLowerCase()];
+      if (tool) {
+        this.editor.setTool(tool);
+        this.hintNode.textContent = this.editor.hint();
+      }
+    });
+  }
+
+  showColourMenu(hex, photo) {
+    const existing = this.root.querySelector('.colour-menu');
+    existing?.remove();
+    const menu = colourTargetMenu(hex, {
+      project: this.project,
+      selected: this.editor.selected,
+      onDone: () => menu.remove(),
+    });
+    this.stepPanelHost.prepend(menu);
+    void photo;
+  }
+
+  // -- project persistence --------------------------------------------------
+
+  onProjectChange() {
+    this.editor.project = this.project;
+    this.preview.project = this.project;
+    this.photos.project = this.project;
+    this.draw();
+    this.renderSide();
+    this.preview.markStale();
+    this.persist();
+  }
+
+  persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, this.project.toJSON());
+    } catch {
+      // A project with many photos can exceed the quota. Autosave is a
+      // convenience; the explicit Save project button is the real safety net.
+      this.summaryNode.textContent = 'Autosave is full — use Save project to keep your work.';
+    }
+  }
+
+  newProject() {
+    if (!confirm('Discard the current project and start over?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+
+  saveProject() {
+    const name = slugify(this.project.data.meta.id || this.project.data.meta.name, 'home');
+    downloadBlob(new Blob([this.project.toJSON()], { type: 'application/json' }), `${name}.domoview.json`);
+  }
+
+  openProject() {
+    const input = el('input', { type: 'file', accept: '.json,application/json' });
+    input.onchange = () => {
+      if (input.files?.[0]) this.readProjectFile(input.files[0]);
+    };
+    input.click();
+  }
+
+  async readProjectFile(file) {
+    try {
+      const text = await file.text();
+      const loaded = Project.fromJSON(text);
+      this.project = loaded;
+      this.editor.project = loaded;
+      this.preview.project = loaded;
+      this.photos.project = loaded;
+      loaded.subscribe(() => this.onProjectChange());
+      await this.loadBackdrop();
+      this.preview.markStale();
+      this.renderSide();
+      toast(`Opened ${file.name}`, 'info');
+    } catch (error) {
+      toast(`Could not open that project: ${error.message}`, 'error');
+    }
+  }
+
+  // -- export ---------------------------------------------------------------
+
+  exportPanel() {
+    const data = this.project.data;
+    const issues = projectStatus(data);
+    const blocking = issues.filter(issue => ['scale', 'walls', 'rooms'].includes(issue.step));
+
+    let stats = null;
+    try {
+      stats = data.plan.scale ? sceneStats(data) : null;
+    } catch {
+      stats = null;
+    }
+
+    return group('Export Home Pack', [
+      issues.length
+        ? el('ul', { class: 'issues' }, issues.map(issue =>
+            el('li', { class: blocking.includes(issue) ? 'blocking' : '' }, issue.text)))
+        : el('p', { class: 'note ok' }, 'Everything needed is in place.'),
+      stats ? el('p', { class: 'note' },
+        `Model: ${stats.meshes} meshes, about ${stats.triangles.toLocaleString()} triangles.`) : null,
+      field('Include marked photos', (() => {
+        const input = el('input', { type: 'checkbox', checked: !!this.includePhotos });
+        input.onchange = () => { this.includePhotos = input.checked; };
+        return input;
+      })(), 'Only photos ticked on the Photos step'),
+      el('div', { class: 'preview-actions' }, [
+        button('Download pack (.zip)', () => this.exportPack(), {
+          class: 'primary', disabled: blocking.length > 0,
+        }),
+        button('Download model only (.glb)', () => this.exportModelOnly(), { class: 'ghost' }),
+        button('Download home.json', () => this.exportManifestOnly(), { class: 'ghost' }),
+      ]),
+      el('pre', { class: 'install-hint' }, [
+        'Unzip into your Home Assistant config:',
+        '',
+        `  /config/www/domoview/homes/${slugify(data.meta.id || data.meta.name, 'home')}/`,
+        '',
+        'Then set the card’s home option to:',
+        '',
+        `  /local/domoview/homes/${slugify(data.meta.id || data.meta.name, 'home')}`,
+      ].join('\n')),
+    ]);
+  }
+
+  async exportPack() {
+    const data = this.project.data;
+    const name = slugify(data.meta.id || data.meta.name, 'home');
+    const notice = toast('Building pack…', 'info', 60000);
+    try {
+      const buffer = await exportGlb(data);
+      const manifest = buildManifest(data, { version: STUDIO_VERSION });
+      const entries = [
+        { name: `${name}/home.json`, content: `${JSON.stringify(manifest, null, 2)}\n` },
+        { name: `${name}/model.glb`, content: buffer },
+        { name: `${name}/README.txt`, content: readmeFor(name, data) },
+      ];
+
+      if (this.includePhotos) {
+        for (const photo of data.photos.filter(entry => entry.include)) {
+          const bytes = dataUrlToBytes(photo.dataUrl);
+          if (bytes) {
+            entries.push({
+              name: `${name}/photos/${slugify(photo.name, photo.id)}.${bytes.extension}`,
+              content: bytes.data,
+            });
+          }
+        }
+      }
+
+      downloadBlob(createZip(entries), `${name}-domoview-pack.zip`);
+      notice.remove();
+      toast('Pack downloaded.', 'ok');
+    } catch (error) {
+      notice.remove();
+      console.error(error);
+      toast(`Export failed: ${error.message}`, 'error');
+    }
+  }
+
+  async exportModelOnly() {
+    try {
+      const buffer = await exportGlb(this.project.data);
+      const name = slugify(this.project.data.meta.id, 'home');
+      downloadBlob(new Blob([buffer], { type: 'model/gltf-binary' }), `${name}.glb`);
+    } catch (error) {
+      toast(`Export failed: ${error.message}`, 'error');
+    }
+  }
+
+  exportManifestOnly() {
+    const manifest = buildManifest(this.project.data, { version: STUDIO_VERSION });
+    downloadBlob(new Blob([`${JSON.stringify(manifest, null, 2)}\n`], { type: 'application/json' }), 'home.json');
+  }
+
+  draw() {
+    if (this.canvas.hidden) return;
+    this.renderer.draw(this.project.data, this.editor.state);
+  }
+}
+
+function restoreProject() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return Project.fromJSON(saved);
+  } catch (error) {
+    console.warn('DomoView Studio: autosave could not be restored', error);
+  }
+  return new Project();
+}
+
+function dataUrlToBytes(dataUrl) {
+  const match = /^data:([^;,]+)(;base64)?,(.*)$/s.exec(dataUrl || '');
+  if (!match) return null;
+  const [, mime, base64, payload] = match;
+  const extension = mime.split('/')[1]?.replace('jpeg', 'jpg') || 'bin';
+  if (!base64) return { data: decodeURIComponent(payload), extension };
+  const binary = atob(payload);
+  const data = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) data[i] = binary.charCodeAt(i);
+  return { data, extension };
+}
+
+function readmeFor(name, data) {
+  return [
+    `${data.meta.name} — a DomoView Home Pack`,
+    '',
+    `Created with DomoView Studio ${STUDIO_VERSION}.`,
+    data.meta.author ? `Author: ${data.meta.author}` : null,
+    data.meta.license ? `License: ${data.meta.license}` : null,
+    '',
+    'Install',
+    '-------',
+    `1. Copy this folder to /config/www/domoview/homes/${name}/`,
+    '2. Add the DomoView card to a dashboard and set:',
+    '',
+    '     type: custom:domoview-card',
+    `     home: /local/domoview/homes/${name}`,
+    '',
+    '3. Open the card editor and map each fixture to a Home Assistant entity.',
+    '',
+    'Contents',
+    '--------',
+    'home.json   the manifest: rooms, walls, windows, fixtures, cameras',
+    'model.glb   the geometry, Y-up glTF-Binary',
+    '',
+    'Documentation: https://github.com/tomjschr/interactive_floormap',
+  ].filter(line => line !== null).join('\n');
+}
+
+const root = document.querySelector('#studio');
+if (root) new Studio(root);

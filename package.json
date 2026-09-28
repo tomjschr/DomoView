@@ -1,0 +1,32 @@
+{
+  "name": "domoview",
+  "version": "0.1.0",
+  "description": "Interactive 3D floor plan card for Home Assistant, driven by a shareable Home Pack (GLB + manifest)",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tomjschr/interactive_floormap.git"
+  },
+  "homepage": "https://github.com/tomjschr/interactive_floormap",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "build:card": "node tools/build.mjs card",
+    "build:studio": "node tools/build.mjs studio",
+    "watch": "node tools/build.mjs --watch",
+    "lint": "eslint src studio/src tools",
+    "validate": "node tools/pack/validate.mjs examples/demo-apartment/home.json",
+    "demo": "node tools/pack/make-demo-pack.mjs",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.0.0"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  }
+}

@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 4
+    groups:
+      # three.js is the only runtime dependency and it ships in the bundle, so
+      # its updates deserve to be looked at on their own.
+      dev-tooling:
+        patterns: ['esbuild', 'eslint', 'ajv', 'ajv-formats']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
