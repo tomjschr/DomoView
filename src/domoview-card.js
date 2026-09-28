@@ -169,14 +169,16 @@ export class DomoViewCard extends HTMLElement {
       return 'baked';
     }
     if (wanted === 'live3d') {
+      if (!this.pack.model.url) throw new Error(this.t('error.noModel'));
       if (!webglAvailable()) throw new Error(this.t('error.webgl'));
       return 'live3d';
     }
     // Automatic: prefer live 3D because the GLB is the pack's source of truth,
-    // and fall back to a bake only where WebGL is missing.
-    if (webglAvailable()) return 'live3d';
+    // and fall back to a bake where WebGL is missing or the pack ships no
+    // geometry at all.
+    if (this.pack.model.url && webglAvailable()) return 'live3d';
     if (this.pack.baked) return 'baked';
-    throw new Error(this.t('error.webgl'));
+    throw new Error(this.t(this.pack.model.url ? 'error.webgl' : 'error.noModel'));
   }
 
   async createRenderer(mode) {

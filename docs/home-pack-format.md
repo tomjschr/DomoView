@@ -98,7 +98,7 @@ and enter the offset.
 
 | Field | Notes |
 |---|---|
-| `url` | Relative to `home.json`, or absolute. |
+| `url` | Relative to `home.json`, or absolute. **Optional** for a baked-only pack: a pack migrated from a purely image-based card has no GLB, and renders in `baked` mode alone. One of `model.url` or `baked` must be present. |
 | `up` | `Y` for a conventional glTF (what the Studio writes, and what external viewers expect); `Z` if the model was exported without the conversion. The card rotates a Y-up model into pack space on load. |
 | `bounds` | Frames the cameras, and decodes the baked position G-buffer. Derived from the plan data if absent, but a bake **requires** it: the G-buffer packs world positions into 8 bits per axis across exactly this box. |
 | `exposure` | Tone-mapping multiplier for the live renderer. |

@@ -100,6 +100,10 @@ export class BakedRenderer {
       this.layer.append(this.compositor.canvas);
       if (this.showWeather) this.layer.append(this.environment.weatherCanvas);
       this.layer.append(this.environment.canvas);
+      // Clear the guard before re-applying: apply() refuses to draw while a
+      // rebuild is in flight, so leaving this until the finally block left the
+      // freshly rebuilt canvases blank.
+      this.rebuilding = false;
       if (snapshot) this.apply(snapshot);
     } catch (error) {
       this.onError(error);

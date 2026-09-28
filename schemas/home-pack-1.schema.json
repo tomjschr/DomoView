@@ -4,7 +4,7 @@
   "title": "DomoView Home Pack v1",
   "description": "Describes one home: its geometry source (GLB), rooms, openings, light fixtures and optional baked render assets. Everything home-specific lives here so the card itself stays generic.",
   "type": "object",
-  "required": ["pack", "model"],
+  "required": ["pack"],
   "additionalProperties": false,
 
   "properties": {
@@ -45,10 +45,10 @@
 
     "model": {
       "type": "object",
-      "required": ["url"],
       "additionalProperties": false,
+      "description": "Either url or a baked section must be present; a pack with only baked images renders without geometry, and a pack with only a model renders live.",
       "properties": {
-        "url": { "type": "string", "description": "Path to the glTF-Binary, relative to home.json." },
+        "url": { "type": "string", "description": "Path to the glTF-Binary, relative to home.json. Optional for a baked-only pack." },
         "up": {
           "enum": ["Y", "Z"],
           "default": "Z",

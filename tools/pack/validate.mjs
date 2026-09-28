@@ -78,13 +78,19 @@ async function semanticChecks(manifest, root) {
     if (fixture.room && !roomIds.has(fixture.room)) {
       problems.push(`fixture "${fixture.id}" references unknown room "${fixture.room}"`);
     }
-    if (!fixture.emitters?.length && !fixture.node) {
-      notes.push(`fixture "${fixture.id}" has neither emitters nor a GLB node`);
+    // Only light-emitting fixtures need a source: a speaker or an oven is a
+    // marker. A baked light delta counts, so a pack migrated from an
+    // image-based card legitimately has no emitters. A variant's fixtures keep
+    // their deltas in the variant's own bake, which is not checked here.
+    const emits = fixture.kind === 'light' || fixture.kind === 'media';
+    if (emits && !fixture.variant && !fixture.emitters?.length && !fixture.node &&
+        !manifest.baked?.lights?.[fixture.id]) {
+      notes.push(`fixture "${fixture.id}" has no emitters, no GLB node and no baked light image`);
     }
   }
 
   // Referenced files must exist, or the card shows a broken scene.
-  const assets = [manifest.model?.url];
+  const assets = manifest.model?.url ? [manifest.model.url] : [];
   if (manifest.baked) {
     assets.push(manifest.baked.day, manifest.baked.night,
       manifest.baked.gbuffer?.position, manifest.baked.gbuffer?.normal,

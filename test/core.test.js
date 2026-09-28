@@ -228,7 +228,38 @@ describe('pack normalisation', () => {
 
   test('a wrong schema version is rejected loudly', () => {
     assert.throws(() => normalisePack({ ...MINIMAL, pack: { ...MINIMAL.pack, schema: 2 } }), PackError);
-    assert.throws(() => normalisePack({ pack: { schema: 1, id: 'x', name: 'x' } }), PackError);
+  });
+
+  test('a pack with neither a model nor a bake is rejected', () => {
+    assert.throws(() => normalisePack({ pack: { schema: 1, id: 'x', name: 'x' } }),
+      /either model.url or a baked section/);
+  });
+
+  test('a baked-only pack loads without a model', () => {
+    // A pack migrated from a purely image-based card has no GLB at all.
+    const pack = normalisePack({
+      pack: { schema: 1, id: 'baked-only', name: 'Baked only' },
+      model: { bounds: { min: [-5, -5, 0], max: [5, 5, 2.6] } },
+      fixtures: [{ id: 'lamp', kind: 'light' }],
+      baked: {
+        size: 1024, day: 'baked/day.png', night: 'baked/night.png',
+        lights: { lamp: 'baked/lights/lamp.png' },
+      },
+    }, '/local/p');
+    assert.equal(pack.model.url, null);
+    assert.equal(pack.baked.size, 1024);
+    assert.deepEqual(pack.model.bounds.max, [5, 5, 2.6]);
+    // And the fixture is not reported as sourceless: its baked delta is enough.
+    assert.ok(!inspectPack(pack).some(text => /lamp/i.test(text)),
+      `unexpected warning: ${inspectPack(pack).join(' | ')}`);
+  });
+
+  test('a model-only pack is still reported as missing nothing', () => {
+    const pack = normalisePack({
+      ...structuredClone(MINIMAL),
+      fixtures: [{ id: 'lamp', kind: 'light', node: 'dv_light_lamp' }],
+    }, '.');
+    assert.ok(!inspectPack(pack).some(text => /lamp/i.test(text)));
   });
 
   test('absolute and relative asset paths both resolve', () => {
