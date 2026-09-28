@@ -101,5 +101,5 @@ First public release. Home Pack schema version **1**.
   that home's geometry or entity ids are in this repository; the example pack
   is invented.
 
-[Unreleased]: https://github.com/tomjschr/interactive_floormap/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/tomjschr/interactive_floormap/releases/tag/v0.1.0
+[Unreleased]: https://github.com/tomjschr/DomoView/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/tomjschr/DomoView/releases/tag/v0.1.0

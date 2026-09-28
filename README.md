@@ -6,11 +6,11 @@ windows, and the blinds you close actually darken the room behind them.
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![CI](https://github.com/tomjschr/interactive_floormap/actions/workflows/ci.yml/badge.svg)](https://github.com/tomjschr/interactive_floormap/actions/workflows/ci.yml)
+[![CI](https://github.com/tomjschr/DomoView/actions/workflows/ci.yml/badge.svg)](https://github.com/tomjschr/DomoView/actions/workflows/ci.yml)
 
 > 🇩🇪 [Deutsche Version dieser Anleitung](README.de.md)
 
-![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images, driven by Home Assistant states.](https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/docs/images/pipeline.svg)
+![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images, driven by Home Assistant states.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
 
 ---
 
@@ -42,12 +42,12 @@ can be shared, forked and improved by anyone.
 **Via HACS** (recommended)
 
 1. HACS → ⋮ → **Custom repositories**
-2. Add `https://github.com/tomjschr/interactive_floormap`, category **Dashboard**
+2. Add `https://github.com/tomjschr/DomoView`, category **Dashboard**
 3. Install **DomoView**, then reload your browser
 
 **Manually**
 
-1. Download `domoview.js` from the [latest release](https://github.com/tomjschr/interactive_floormap/releases)
+1. Download `domoview.js` from the [latest release](https://github.com/tomjschr/DomoView/releases)
 2. Copy it to `/config/www/domoview/domoview.js`
 3. Settings → Dashboards → ⋮ → **Resources** → add `/local/domoview/domoview.js`
    as a **JavaScript module**
@@ -73,7 +73,7 @@ demo apartment is not your home, but it shows you exactly what the card does.
 
 ### 3. Build a pack for your own home
 
-Open **[DomoView Studio](https://tomjschr.github.io/interactive_floormap/studio/)**
+Open **[DomoView Studio](https://tomjschr.github.io/DomoView/studio/)**
 in a browser. Nothing is uploaded; it all runs locally.
 
 ```

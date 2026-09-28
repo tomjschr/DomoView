@@ -688,7 +688,7 @@ if (!window.customCards.some(card => card.type === 'domoview-card')) {
     name: 'DomoView',
     description: 'Interactive 3D floor plan driven by a Home Pack (GLB + manifest)',
     preview: true,
-    documentationURL: 'https://github.com/tomjschr/interactive_floormap',
+    documentationURL: 'https://github.com/tomjschr/DomoView',
   });
 }
 

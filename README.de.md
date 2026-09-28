@@ -7,11 +7,11 @@ verdunkelt tatsächlich den Raum dahinter.
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![CI](https://github.com/tomjschr/interactive_floormap/actions/workflows/ci.yml/badge.svg)](https://github.com/tomjschr/interactive_floormap/actions/workflows/ci.yml)
+[![CI](https://github.com/tomjschr/DomoView/actions/workflows/ci.yml/badge.svg)](https://github.com/tomjschr/DomoView/actions/workflows/ci.yml)
 
 > 🇬🇧 [English version](README.md)
 
-![Wie DomoView zusammenhängt: aus Grundriss und Raumfotos wird im Studio ein Home Pack, das die Karte entweder live per WebGL oder aus gebackenen Bildern rendert, gesteuert von Home-Assistant-Zuständen.](https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/docs/images/pipeline.svg)
+![Wie DomoView zusammenhängt: aus Grundriss und Raumfotos wird im Studio ein Home Pack, das die Karte entweder live per WebGL oder aus gebackenen Bildern rendert, gesteuert von Home-Assistant-Zuständen.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
 
 ---
 
@@ -44,13 +44,13 @@ Packs lassen sich also teilen, forken und gemeinsam verbessern.
 **Über HACS** (empfohlen)
 
 1. HACS → ⋮ → **Benutzerdefinierte Repositories**
-2. `https://github.com/tomjschr/interactive_floormap` hinzufügen,
+2. `https://github.com/tomjschr/DomoView` hinzufügen,
    Kategorie **Dashboard**
 3. **DomoView** installieren, Browser neu laden
 
 **Manuell**
 
-1. `domoview.js` aus dem [letzten Release](https://github.com/tomjschr/interactive_floormap/releases) laden
+1. `domoview.js` aus dem [letzten Release](https://github.com/tomjschr/DomoView/releases) laden
 2. Nach `/config/www/domoview/domoview.js` kopieren
 3. Einstellungen → Dashboards → ⋮ → **Ressourcen** → `/local/domoview/domoview.js`
    als **JavaScript-Modul** eintragen
@@ -76,7 +76,7 @@ Demo-Wohnung ist nicht deine, zeigt aber genau, was die Karte tut.
 
 ### 3. Ein Pack für die eigene Wohnung bauen
 
-**[DomoView Studio](https://tomjschr.github.io/interactive_floormap/studio/)**
+**[DomoView Studio](https://tomjschr.github.io/DomoView/studio/)**
 im Browser öffnen. Es wird nichts hochgeladen, alles läuft lokal.
 
 ```

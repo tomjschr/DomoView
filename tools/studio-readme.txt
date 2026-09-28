@@ -28,7 +28,7 @@ No Node.js, or you would rather not install it?
 
 Two alternatives, both identical in function:
 
-  * The hosted copy:  https://tomjschr.github.io/interactive_floormap/studio/
+  * The hosted copy:  https://tomjschr.github.io/DomoView/studio/
   * Your own Home Assistant, once DomoView is installed through HACS:
       http://<your-ha>:8123/local/domoview/studio/index.html
 
@@ -78,8 +78,8 @@ you would be tracing the plan from scratch.
 Documentation and issues
 ------------------------
 
-https://github.com/tomjschr/interactive_floormap
+https://github.com/tomjschr/DomoView
 
 The authoring guide is worth ten minutes before you start - especially the
 part about which four measurements actually matter:
-https://github.com/tomjschr/interactive_floormap/blob/main/docs/authoring-from-photos.md
+https://github.com/tomjschr/DomoView/blob/main/docs/authoring-from-photos.md

@@ -13,7 +13,7 @@ upgrade before reporting.
 
 Please **do not open a public issue** for a security problem.
 
-Use [GitHub's private vulnerability reporting](https://github.com/tomjschr/interactive_floormap/security/advisories/new)
+Use [GitHub's private vulnerability reporting](https://github.com/tomjschr/DomoView/security/advisories/new)
 on this repository. You should get an acknowledgement within a week.
 
 Helpful to include: what an attacker can do, the steps to reproduce it, the

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/schemas/home-pack-1.schema.json",
+  "$schema": "https://raw.githubusercontent.com/tomjschr/DomoView/main/schemas/home-pack-1.schema.json",
   "pack": {
     "schema": 1,
     "id": "demo-apartment",

@@ -7,9 +7,9 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/tomjschr/interactive_floormap.git"
+    "url": "https://github.com/tomjschr/DomoView.git"
   },
-  "homepage": "https://github.com/tomjschr/interactive_floormap",
+  "homepage": "https://github.com/tomjschr/DomoView",
   "scripts": {
     "build": "node tools/build.mjs",
     "build:card": "node tools/build.mjs card",

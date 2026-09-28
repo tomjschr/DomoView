@@ -553,7 +553,7 @@ function readmeFor(name, data) {
     'Everything under /config/www is served without authentication, and',
     'those two contain your entity ids and your floor plan image.',
     '',
-    'Documentation: https://github.com/tomjschr/interactive_floormap',
+    'Documentation: https://github.com/tomjschr/DomoView',
   ].filter(line => line !== null).join('\n');
 }
 

@@ -3,7 +3,7 @@
 An interactive 3D floor plan for Home Assistant. Your home as a live doll-house
 view, driven by your entity states.
 
-![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images.](https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/docs/images/pipeline.svg)
+![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
 
 - **Lights are lights.** Brightness and colour from a `light.*` entity drive a
   real light source in the scene.
@@ -32,7 +32,7 @@ home: /local/domoview/homes/demo-apartment
 ## Build a pack for your own home
 
 Open **DomoView Studio** — either the hosted copy at
-<https://tomjschr.github.io/interactive_floormap/studio/> or, offline, the one
+<https://tomjschr.github.io/DomoView/studio/> or, offline, the one
 this installation now contains at `/local/domoview/studio/index.html`.
 
 Drop in a floor plan image, calibrate the scale by clicking two points a known
@@ -44,6 +44,6 @@ Nothing is uploaded anywhere; the Studio runs entirely in your browser.
 
 ## Links
 
-- [Documentation](https://github.com/tomjschr/interactive_floormap#documentation)
-- [Configuration reference](https://github.com/tomjschr/interactive_floormap/blob/main/docs/configuration.md)
-- [Troubleshooting](https://github.com/tomjschr/interactive_floormap/blob/main/docs/troubleshooting.md)
+- [Documentation](https://github.com/tomjschr/DomoView#documentation)
+- [Configuration reference](https://github.com/tomjschr/DomoView/blob/main/docs/configuration.md)
+- [Troubleshooting](https://github.com/tomjschr/DomoView/blob/main/docs/troubleshooting.md)
