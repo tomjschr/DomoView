@@ -100,7 +100,9 @@ in a browser. Nothing is uploaded; it all runs locally.
    written into an exported pack.
 9. **Preview** — the card's own renderer, on your model. Scrub time of day and
    close the blinds before you ever touch Home Assistant.
-10. **Export** — download a ZIP, unpack it into
+10. **Export** — you get a ZIP holding the pack folder to upload, a ready-made
+    **card YAML** that lists every fixture, blind, window contact and room to
+    map, and your editable project file. Upload the folder into
     `/config/www/domoview/homes/<your-pack>/`.
 
 The Studio also runs offline from your own install once DomoView is

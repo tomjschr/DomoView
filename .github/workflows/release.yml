@@ -40,7 +40,13 @@ jobs:
           fi
 
       - name: Package the Studio
+        # Ships with its own server and a one-line start script, so the zip is
+        # usable without checking the repository out. ES modules cannot be
+        # loaded over file://, so opening index.html directly does not work —
+        # hence the server rather than a bare folder.
         run: |
+          cp tools/studio-server.mjs dist/studio/serve.mjs
+          cp tools/studio-readme.txt dist/studio/README.txt
           cd dist && zip -r ../domoview-studio.zip studio -x '*.map'
 
       - name: Package the example pack

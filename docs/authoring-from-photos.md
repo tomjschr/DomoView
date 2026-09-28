@@ -221,23 +221,57 @@ Check, in this order:
 
 ## Step 9: export and install
 
-Export downloads a ZIP. Unpack it into:
+Export downloads a ZIP with three things in it:
 
 ```
-/config/www/domoview/homes/<your-pack>/
+my-home/                  the pack — upload this folder
+  home.json
+  model.glb
+  README.txt
+my-home-card.yaml         paste into a dashboard card
+my-home.domoview.json     your editable source — keep it
 ```
 
-so that `/config/www/domoview/homes/<your-pack>/home.json` exists. Then:
+**1. Upload the folder** so that
+`/config/www/domoview/homes/my-home/home.json` exists. The File Editor add-on,
+a Samba share or the VS Code add-on all work; DomoView does not care how the
+files got there.
+
+**2. Open the card YAML.** It lists every fixture, blind, window contact and
+room the pack defines, grouped by room and labelled:
 
 ```yaml
 type: custom:domoview-card
-home: /local/domoview/homes/<your-pack>
+home: /local/domoview/homes/my-home
+
+entities:
+  # Living & Dining
+  living_ceiling_spots: ''  # Living ceiling spots · 3 bulbs, spot
+  dining_pendant: ''        # Dining pendant
+  living_floor_lamp: ''     # Living floor lamp
 ```
 
-Open the visual editor and map your entities. **Save the project file too** —
-`Save project` gives you a `.domoview.json` you can reopen later to change a
-sill height or add the lamp you bought last week. The pack is the output; the
-project is the source.
+Replace each `''` with one of your entities. An empty value means unbound, and
+an unbound fixture stays dark on purpose — so you can map five lamps today and
+the rest whenever you like.
+
+**3. Paste it** into *Edit dashboard → + Add card → Manual*. The card's visual
+editor offers the same keys with entity pickers if you would rather click than
+type; both write the same config.
+
+### Two files belong outside `www`
+
+The card YAML and the project file are **not** inside the pack folder, and that
+is deliberate: everything under `/config/www` is served **without
+authentication**. Once filled in, the YAML lists your entity ids, and the
+project file embeds your floor plan image and any photos you attached. Keep
+both somewhere else.
+
+### Keep the project file
+
+`my-home.domoview.json` is the source; the pack is the output. Reopen it in the
+Studio with **Open…** to correct a sill height or add the lamp you bought last
+week, then export again. Without it you are tracing the plan from scratch.
 
 ---
 
