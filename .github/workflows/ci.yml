@@ -43,18 +43,24 @@ jobs:
           node tools/pack/validate.mjs "${packs[@]}"
 
       - name: Demo pack is reproducible from its project file
-        # The generator runs the Studio's own exporter. If this drifts, either
-        # the exporter changed behaviour or the committed pack is stale.
+        # The generator runs the Studio's own exporter, so this also checks the
+        # authoring pipeline still works.
+        #
+        # The manifest is compared byte for byte: it is decimal-rounded JSON.
+        # The model is compared structurally, because byte-identical float
+        # geometry is not something this pipeline can promise across
+        # toolchains — Math.sin and friends are not specified to be
+        # bit-identical between V8 versions, and those last bits end up in
+        # float32 vertices.
         run: |
-          npm run demo
-          # Scoped to the generated pack: npm run demo writes nothing else
-          # under examples/, and a broader check would flag hand-edited files
-          # like demo.html.
-          if ! git diff --quiet -- examples/demo-apartment/; then
-            echo "::error::examples/demo-apartment/ changed after regenerating. Run 'npm run demo' and commit the result."
-            git diff --stat -- examples/demo-apartment/
-            exit 1
-          fi
+          node tools/pack/make-demo-pack.mjs "$RUNNER_TEMP/regen"
+          diff -u examples/demo-apartment/home.json "$RUNNER_TEMP/regen/home.json" \
+            || { echo "::error::home.json changed after regenerating. Run 'npm run demo' and commit the result."; exit 1; }
+          diff -u examples/demo-apartment/project.domoview.json "$RUNNER_TEMP/regen/project.domoview.json" \
+            || { echo "::error::project.domoview.json changed after regenerating."; exit 1; }
+          node tools/pack/compare-glb.mjs \
+            examples/demo-apartment/model.glb "$RUNNER_TEMP/regen/model.glb" \
+            || { echo "::error::the regenerated model is not equivalent to the committed one."; exit 1; }
 
       - name: dist/ matches the sources
         # HACS installs dist/domoview.js straight from the repository, so a

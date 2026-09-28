@@ -6,8 +6,11 @@ windows, and the blinds you close actually darken the room behind them.
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/tomjschr/interactive_floormap/actions/workflows/ci.yml/badge.svg)](https://github.com/tomjschr/interactive_floormap/actions/workflows/ci.yml)
 
 > 🇩🇪 [Deutsche Version dieser Anleitung](README.de.md)
+
+![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images, driven by Home Assistant states.](https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/docs/images/pipeline.svg)
 
 ---
 

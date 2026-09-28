@@ -7,8 +7,11 @@ verdunkelt tatsächlich den Raum dahinter.
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/tomjschr/interactive_floormap/actions/workflows/ci.yml/badge.svg)](https://github.com/tomjschr/interactive_floormap/actions/workflows/ci.yml)
 
 > 🇬🇧 [English version](README.md)
+
+![Wie DomoView zusammenhängt: aus Grundriss und Raumfotos wird im Studio ein Home Pack, das die Karte entweder live per WebGL oder aus gebackenen Bildern rendert, gesteuert von Home-Assistant-Zuständen.](https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/docs/images/pipeline.svg)
 
 ---
 
