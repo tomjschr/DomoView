@@ -11,7 +11,14 @@ verdunkelt tatsächlich den Raum dahinter.
 
 > 🇬🇧 [English version](README.md)
 
-![Wie DomoView zusammenhängt: aus Grundriss und Raumfotos wird im Studio ein Home Pack, das die Karte entweder live per WebGL oder aus gebackenen Bildern rendert, gesteuert von Home-Assistant-Zuständen.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
+![Eine Dreizimmerwohnung mit Balkon als isometrischer Schnitt. Jeder Raum ist von seinen eigenen Lampen beleuchtet, Möbel und Pflanzen sind modelliert, kleine Anzeigen nennen Temperatur und Luftfeuchtigkeit.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/hero-hand-modelled.webp)
+
+<sub>Eine **handmodellierte** Wohnung, live aus ihrer GLB gerendert, jede Leuchte
+von einer Home-Assistant-Entität gesteuert. Diese Wohnung liegt nicht im
+Repository: ein Pack ist der vermessene Grundriss eines echten Zuhauses, und das
+ist eine [bewusste Entscheidung](docs/sharing-packs.md), die jeder für sich
+trifft. Weiter unten steht, was das Studio aus einem getracten Grundriss
+erzeugt.</sub>
 
 ---
 
@@ -79,11 +86,7 @@ Demo-Wohnung ist nicht deine, zeigt aber genau, was die Karte tut.
 **[DomoView Studio](https://tomjschr.github.io/DomoView/studio/)**
 im Browser öffnen. Es wird nichts hochgeladen, alles läuft lokal.
 
-```
-  Grundrissbild  ──┐
-                   ├──▶  Studio  ──▶  model.glb + home.json  ──▶  Karte
-  Fotos je Raum  ──┘
-```
+![Wie DomoView zusammenhängt: aus Grundriss und Raumfotos wird im Studio ein Home Pack, das die Karte entweder live per WebGL oder aus gebackenen Bildern rendert, gesteuert von Home-Assistant-Zuständen.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
 
 1. **Plan** — Grundriss hineinziehen (PNG/JPG; eine PDF-Seite vorher als Bild
    exportieren)
@@ -115,6 +118,17 @@ im Browser öffnen. Es wird nichts hochgeladen, alles läuft lokal.
     nicht darin: alles unter `/config/www` wird ohne Authentifizierung
     ausgeliefert, und die beiden enthalten deine Entity-IDs beziehungsweise
     dein Grundrissbild.
+
+![Die Beispielwohnung von der Karte gerendert: Wände mit echten Fenster- und Türöffnungen, Bodenplatten, Möbel als einfache Blöcke und warme Lichtkegel unter jeder Leuchte.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/screenshot-studio-output.webp)
+
+<sub>**Das erzeugt das Studio** — und das ist der ehrliche Vergleich zum Bild
+oben: Wände mit echten Öffnungen auf ihren gemessenen Brüstungs- und
+Sturzhöhen, Bodenplatten, Möbel als Blöcke. Genug, um die Wohnung auf einen
+Blick zu lesen und jede Leuchte richtig zu setzen — Licht, Sonne und Rollos
+verhalten sich in beiden Fällen identisch, denn das ist Aufgabe der Karte und
+nicht des Modells. Wer die Optik des Hero-Bilds will, modelliert seine Wohnung
+in Blender und [bringt die eigene GLB mit](docs/glb-conventions.md); das
+Pack-Format trennt Geometrie und Annotation genau dafür.</sub>
 
 Das Studio läuft nach der Installation auch offline aus der eigenen Instanz:
 `/local/domoview/studio/index.html`.
