@@ -29,6 +29,7 @@ export default {
   'error.image': 'Image not loaded: {url}',
   'error.webgl': 'WebGL is unavailable in this browser; switch the card to the baked renderer.',
   'error.noBaked': 'This Home Pack has no baked assets. Set renderer: live3d or bake the pack.',
+  'error.noModel': 'This Home Pack ships no 3D model, only baked images. Set renderer: baked.',
 
   'preview.title': 'Preview',
   'preview.date': 'Date',

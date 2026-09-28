@@ -4,7 +4,9 @@ npm-debug.log*
 
 # Local Home Packs. A pack describes where someone actually lives, so packs
 # other than the fictional example are kept out of the repository by default.
-/homes/
+# The folder README is tracked so the convention is discoverable.
+/homes/*
+!/homes/README.md
 /packs/
 *.private.json
 *.domoview.local.json

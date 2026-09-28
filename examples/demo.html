@@ -34,14 +34,14 @@
 <body>
 <header>
   <h1>DomoView card demo</h1>
-  <p>The card rendering <code>examples/demo-apartment</code> against a stub Home Assistant.
+  <p>The card rendering <code id="packLabel">examples/demo-apartment</code> against a stub Home Assistant.
      No Home Assistant instance is involved.</p>
 </header>
 
 <div class="layout">
   <div class="controls" id="controls"></div>
   <div class="frame">
-    <h2>Live 3D renderer</h2>
+    <h2 id="rendererLabel">Renderer</h2>
     <div id="live"></div>
   </div>
   <p class="hint">
@@ -61,7 +61,7 @@ const states = {
   'weather.home': { entity_id: 'weather.home', state: 'partlycloudy', attributes: { cloud_coverage: 35, wind_speed: 11 } },
 };
 
-const PACK = '../examples/demo-apartment';
+const PACK = new URLSearchParams(location.search).get('pack') || '../examples/demo-apartment';
 const manifest = await (await fetch(`${PACK}/home.json`)).json();
 
 /* Bind every fixture to a synthetic light entity so the demo has something to
@@ -124,7 +124,7 @@ const hass = {
 const card = document.createElement('domoview-card');
 card.setConfig({
   home: PACK,
-  renderer: 'live3d',
+  renderer: new URLSearchParams(location.search).get('renderer') || 'live3d',
   quality: 'high',
   show_climate: true,
   show_weather: true,
@@ -133,6 +133,11 @@ card.setConfig({
   preview: { enabled: false },
 });
 document.querySelector('#live').append(card);
+document.querySelector('#packLabel').textContent = PACK;
+setTimeout(() => {
+  const label = document.querySelector('#rendererLabel');
+  label.textContent = card.rendererMode === 'baked' ? 'Baked renderer' : 'Live 3D renderer';
+}, 1500);
 
 function push() {
   card.hass = { ...hass, states: { ...states } };

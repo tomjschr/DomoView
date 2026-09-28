@@ -15,7 +15,7 @@ home: /local/domoview/homes/my-flat
 | Option | Type | Default | Meaning |
 |---|---|---|---|
 | `home` | string | *required* | Folder containing `home.json`, or the URL of the file itself. |
-| `renderer` | `auto` \| `live3d` \| `baked` | `auto` | `auto` prefers live 3D and falls back to a bake only where WebGL is missing. |
+| `renderer` | `auto` \| `live3d` \| `baked` | `auto` | `auto` prefers live 3D, and falls back to a bake where WebGL is missing or the pack ships no geometry at all. |
 | `quality` | `low` \| `medium` \| `high` | `medium` | Real-time light budget, shadow maps, pixel ratio and particle count. See the table below. |
 | `camera` | string | pack default | A camera id from the pack. Ignored by the baked renderer, which is locked to the camera it was baked from. |
 | `variant` | string | `base` | A variant id from the pack, e.g. `christmas`. |

@@ -47,9 +47,12 @@ jobs:
         # the exporter changed behaviour or the committed pack is stale.
         run: |
           npm run demo
-          if ! git diff --quiet -- examples/; then
-            echo "::error::examples/ changed after regenerating. Run 'npm run demo' and commit the result."
-            git diff --stat -- examples/
+          # Scoped to the generated pack: npm run demo writes nothing else
+          # under examples/, and a broader check would flag hand-edited files
+          # like demo.html.
+          if ! git diff --quiet -- examples/demo-apartment/; then
+            echo "::error::examples/demo-apartment/ changed after regenerating. Run 'npm run demo' and commit the result."
+            git diff --stat -- examples/demo-apartment/
             exit 1
           fi
 

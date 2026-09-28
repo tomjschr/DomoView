@@ -86,7 +86,11 @@ export function normalisePack(raw, root = '.', options = {}) {
       `Unsupported Home Pack schema ${meta.schema ?? '(missing)'}; this build reads version ${SCHEMA_VERSION}`,
     );
   }
-  if (!raw.model?.url) throw new PackError('home.json is missing model.url');
+  // A pack may ship geometry, baked images, or both. One of the two is needed;
+  // a pack migrated from a purely image-based card has no GLB at all.
+  if (!raw.model?.url && !raw.baked?.day) {
+    throw new PackError('home.json needs either model.url or a baked section');
+  }
 
   const variantId = options.variant && options.variant !== 'base' ? options.variant : null;
   const variants = (raw.variants || []).map(entry => ({ ...entry }));
@@ -101,10 +105,10 @@ export function normalisePack(raw, root = '.', options = {}) {
   const coverProfiles = { ...DEFAULT_COVER_PROFILES, ...(raw.coverProfiles || {}) };
   const openings = normaliseOpenings(raw.openings, wallById, roomById, levelById, coverProfiles);
   const fixtures = normaliseFixtures(raw.fixtures, roomById, variantId);
-  const bounds = normaliseBounds(raw.model.bounds, { rooms, openings, fixtures });
+  const bounds = normaliseBounds(raw.model?.bounds, { rooms, openings, fixtures });
   const cameras = normaliseCameras(raw.cameras, bounds);
 
-  const modelUrl = resolveUrl(root, variant?.model || raw.model.url);
+  const modelUrl = resolveUrl(root, variant?.model || raw.model?.url);
   const bakedSource = variant?.baked
     ? withBakedRoot(raw.baked, variant.baked)
     : raw.baked;
@@ -125,15 +129,15 @@ export function normalisePack(raw, root = '.', options = {}) {
     },
     model: {
       url: modelUrl,
-      up: raw.model.up === 'Y' ? 'Y' : 'Z',
+      up: raw.model?.up === 'Y' ? 'Y' : 'Z',
       bounds,
       center: boundsCenter(bounds),
       span: boundsSpan(bounds),
-      exposure: Number(raw.model.exposure) || 1,
+      exposure: Number(raw.model?.exposure) || 1,
       environment: {
-        skyIntensity: raw.model.environment?.skyIntensity ?? 1,
-        groundColor: raw.model.environment?.groundColor || [92, 88, 80],
-        nightAmbient: raw.model.environment?.nightAmbient ?? 0.04,
+        skyIntensity: raw.model?.environment?.skyIntensity ?? 1,
+        groundColor: raw.model?.environment?.groundColor || [92, 88, 80],
+        nightAmbient: raw.model?.environment?.nightAmbient ?? 0.04,
       },
     },
     cameras,
@@ -416,9 +420,14 @@ export function inspectPack(pack) {
   if (!pack.rooms.length) warnings.push('No rooms defined: per-room daylight and climate chips stay off.');
   if (!pack.windows.length) warnings.push('No windows defined: sunlight cannot enter the model.');
   if (!pack.lights.length) warnings.push('No light fixtures defined: nothing to bind.');
+  if (!pack.model.url && !pack.baked) {
+    warnings.push('Neither a model nor baked images: nothing can be rendered.');
+  }
   for (const fixture of pack.lights) {
-    if (!fixture.emitters.length && !fixture.node) {
-      warnings.push(`Fixture "${fixture.name}" has neither emitters nor a GLB node.`);
+    // A baked light delta is all the baked renderer needs, so a pack migrated
+    // from an image-based card legitimately has no emitters.
+    if (!fixture.emitters.length && !fixture.node && !pack.baked?.lights?.[fixture.id]) {
+      warnings.push(`Fixture "${fixture.name}" has neither emitters, a GLB node, nor a baked light image.`);
     }
   }
   for (const opening of pack.windows) {

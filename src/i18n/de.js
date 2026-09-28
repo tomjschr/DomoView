@@ -29,6 +29,7 @@ export default {
   'error.image': 'Bild nicht geladen: {url}',
   'error.webgl': 'WebGL ist in diesem Browser nicht verfügbar; die Karte auf den Baked-Renderer umstellen.',
   'error.noBaked': 'Dieses Home Pack hat keine gebackenen Bilder. renderer: live3d setzen oder das Pack backen.',
+  'error.noModel': 'Dieses Home Pack enthält kein 3D-Modell, nur gebackene Bilder. renderer: baked setzen.',
 
   'preview.title': 'Vorschau',
   'preview.date': 'Datum',
