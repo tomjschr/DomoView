@@ -83,8 +83,19 @@ Demo-Wohnung ist nicht deine, zeigt aber genau, was die Karte tut.
 
 ### 3. Ein Pack für die eigene Wohnung bauen
 
-**[DomoView Studio](https://tomjschr.github.io/DomoView/studio/)**
-im Browser öffnen. Es wird nichts hochgeladen, alles läuft lokal.
+**DomoView Studio** macht aus einem Grundrissbild und ein paar Raumfotos ein
+Pack. Es wird nie etwas hochgeladen, egal wie du es startest — die drei Wege
+sind dieselbe Anwendung:
+
+| | |
+|---|---|
+| **Auf dem eigenen Rechner** | `domoview-studio.zip` aus dem [letzten Release](https://github.com/tomjschr/DomoView/releases) laden, entpacken, `node serve.mjs` starten. Braucht [Node.js](https://nodejs.org) 20 oder neuer. |
+| **Aus der eigenen Home-Assistant-Instanz** | `/local/domoview/studio/index.html`, sobald DomoView über HACS installiert ist. Kein zusätzlicher Download. |
+| **Gehostet** | [tomjschr.github.io/DomoView/studio/](https://tomjschr.github.io/DomoView/studio/) — ganz ohne Installation. |
+
+Doppelklick auf `index.html` funktioniert **nicht**: Browser laden keine
+ES-Module direkt vom Dateisystem. Genau deshalb bringt die lokale Variante
+einen kleinen Server mit, der nur auf localhost lauscht.
 
 ![Wie DomoView zusammenhängt: aus Grundriss und Raumfotos wird im Studio ein Home Pack, das die Karte entweder live per WebGL oder aus gebackenen Bildern rendert, gesteuert von Home-Assistant-Zuständen.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
 
@@ -129,9 +140,6 @@ verhalten sich in beiden Fällen identisch, denn das ist Aufgabe der Karte und
 nicht des Modells. Wer die Optik des Hero-Bilds will, modelliert seine Wohnung
 in Blender und [bringt die eigene GLB mit](docs/glb-conventions.md); das
 Pack-Format trennt Geometrie und Annotation genau dafür.</sub>
-
-Das Studio läuft nach der Installation auch offline aus der eigenen Instanz:
-`/local/domoview/studio/index.html`.
 
 ## Konfiguration
 

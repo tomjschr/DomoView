@@ -273,7 +273,7 @@ async function main() {
     path.join(import.meta.dirname, '../../examples/demo-apartment'));
   const data = buildProject();
 
-  const manifest = buildManifest(data, { version: '0.1.0' });
+  const manifest = buildManifest(data, { version: '0.1.1' });
   manifest.shadowCasters = balconyShadowCasters(manifest);
 
   // Prove the card can actually read what we just wrote.

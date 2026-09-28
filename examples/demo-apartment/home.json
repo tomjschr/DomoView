@@ -10,7 +10,7 @@
     "description": "A fictional six-room apartment with a west balcony, used to demonstrate DomoView. Not a real home.",
     "units": "m",
     "north": 0,
-    "createdWith": "domoview-studio 0.1.0"
+    "createdWith": "domoview-studio 0.1.1"
   },
   "model": {
     "url": "model.glb",

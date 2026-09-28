@@ -28,6 +28,32 @@ const banner = `/*! DomoView ${pkg.version} | ${pkg.license} | ${pkg.homepage}
  * Bundles three.js (MIT) and Material Design Icons paths (Apache-2.0).
  */`;
 
+/* The version appears in the bundle banner, in the card's console line, in the
+ * Studio's title bar and in the createdWith field of every generated pack. It
+ * is written as a literal in each place rather than injected, so that the
+ * sources run unbuilt in Node for the tests -- which means it can drift.
+ * Catch that here instead of shipping a card that reports the wrong version. */
+async function checkVersionLiterals() {
+  const expected = pkg.version;
+  const places = [
+    ['src/domoview-card.js', /export const VERSION = '([^']+)'/],
+    ['studio/src/main.js', /const STUDIO_VERSION = '([^']+)'/],
+  ];
+  const wrong = [];
+  for (const [file, pattern] of places) {
+    const match = pattern.exec(await readFile(path.join(root, file), 'utf8'));
+    if (!match) wrong.push(`${file}: version literal not found`);
+    else if (match[1] !== expected) wrong.push(`${file}: ${match[1]} (expected ${expected})`);
+  }
+  if (wrong.length) {
+    console.error(`\nVersion mismatch against package.json ${expected}:`);
+    for (const line of wrong) console.error(`  ${line}`);
+    process.exit(1);
+  }
+}
+
+await checkVersionLiterals();
+
 const shared = {
   bundle: true,
   format: 'esm',

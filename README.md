@@ -79,8 +79,19 @@ demo apartment is not your home, but it shows you exactly what the card does.
 
 ### 3. Build a pack for your own home
 
-Open **[DomoView Studio](https://tomjschr.github.io/DomoView/studio/)**
-in a browser. Nothing is uploaded; it all runs locally.
+**DomoView Studio** turns a floor plan image and a few room photos into a pack.
+Nothing is ever uploaded, whichever way you start it — the three below are the
+same application:
+
+| | |
+|---|---|
+| **On your own machine** | Download `domoview-studio.zip` from the [latest release](https://github.com/tomjschr/DomoView/releases), unzip it, and run `node serve.mjs`. Needs [Node.js](https://nodejs.org) 20 or newer. |
+| **From your own Home Assistant** | `/local/domoview/studio/index.html`, once DomoView is installed through HACS. Nothing extra to download. |
+| **Hosted** | [tomjschr.github.io/DomoView/studio/](https://tomjschr.github.io/DomoView/studio/) — nothing to install at all. |
+
+Double-clicking `index.html` does **not** work: browsers refuse to load ES
+modules straight off the filesystem, which is why the local option ships a
+small loopback-only server rather than a bare folder.
 
 ![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images, driven by Home Assistant states.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
 
@@ -118,9 +129,6 @@ card's job rather than the model's. If you want the look of the hero image,
 model your home in Blender and
 [bring your own GLB](docs/glb-conventions.md); the pack format keeps geometry
 and annotation separate precisely so that works.</sub>
-
-The Studio also runs offline from your own install once DomoView is
-installed: `/local/domoview/studio/index.html`.
 
 ## Configuration
 

@@ -21,7 +21,7 @@ import {
   readFileAsDataUrl, normaliseImage,
 } from './ui.js';
 
-const STUDIO_VERSION = '0.1.0';
+const STUDIO_VERSION = '0.1.1';
 const STORAGE_KEY = 'domoview.studio.project';
 
 /** Each step binds a canvas tool and a short instruction. */

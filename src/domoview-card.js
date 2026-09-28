@@ -13,7 +13,7 @@ import { clamp } from './core/geometry.js';
 import { cardStyles } from './styles.js';
 import { ICONS } from './icons.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';
 
 const DEFAULT_CONFIG = {
   home: '/local/domoview/homes/demo',

@@ -214,7 +214,10 @@ describe('manifest builder', () => {
   test('rebuilding from the saved project reproduces the shipped manifest', async () => {
     const project = JSON.parse(await readFile(path.join(packDir, 'project.domoview.json'), 'utf8'));
     const { buildManifest } = await import('../studio/src/export/manifest.js');
-    const rebuilt = buildManifest(project, { version: '0.1.0' });
+    // Read from package.json: the shipped manifest records the version that
+    // generated it, so a hardcoded literal here breaks on every release.
+    const { version } = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+    const rebuilt = buildManifest(project, { version });
     // shadowCasters are added by the demo generator, not the exporter.
     const shipped = structuredClone(manifest);
     delete shipped.shadowCasters;
