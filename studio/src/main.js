@@ -15,6 +15,7 @@ import { Preview3D } from './preview3d.js';
 import { buildManifest } from './export/manifest.js';
 import { exportGlb, sceneStats } from './export/glb.js';
 import { createZip, downloadBlob } from './export/zip.js';
+import { buildCardYaml, cardYamlSummary } from './export/cardyaml.js';
 import {
   el, button, group, field, askNumber, toast,
   readFileAsDataUrl, normaliseImage,
@@ -374,6 +375,21 @@ class Studio {
         : el('p', { class: 'note ok' }, 'Everything needed is in place.'),
       stats ? el('p', { class: 'note' },
         `Model: ${stats.meshes} meshes, about ${stats.triangles.toLocaleString()} triangles.`) : null,
+      (() => {
+        // What the card YAML will ask you to map, so there are no surprises.
+        try {
+          const counts = cardYamlSummary(buildManifest(data, { version: STUDIO_VERSION }));
+          const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
+          return el('p', { class: 'note' }, 'Card YAML lists ' + [
+            plural(counts.fixtures, 'fixture', 'fixtures'),
+            plural(counts.covers, 'blind', 'blinds'),
+            plural(counts.windows, 'window contact', 'window contacts'),
+            plural(counts.rooms, 'room', 'rooms'),
+          ].join(', ') + ' to map.');
+        } catch {
+          return null;
+        }
+      })(),
       field('Include marked photos', (() => {
         const input = el('input', { type: 'checkbox', checked: !!this.includePhotos });
         input.onchange = () => { this.includePhotos = input.checked; };
@@ -385,16 +401,29 @@ class Studio {
         }),
         button('Download model only (.glb)', () => this.exportModelOnly(), { class: 'ghost' }),
         button('Download home.json', () => this.exportManifestOnly(), { class: 'ghost' }),
+        button('Download card.yaml', () => this.exportCardYaml(), { class: 'ghost' }),
       ]),
-      el('pre', { class: 'install-hint' }, [
-        'Unzip into your Home Assistant config:',
-        '',
-        `  /config/www/domoview/homes/${slugify(data.meta.id || data.meta.name, 'home')}/`,
-        '',
-        'Then set the card’s home option to:',
-        '',
-        `  /local/domoview/homes/${slugify(data.meta.id || data.meta.name, 'home')}`,
-      ].join('\n')),
+      el('pre', { class: 'install-hint' }, (() => {
+        const id = slugify(data.meta.id || data.meta.name, 'home');
+        return [
+          `The zip contains:`,
+          '',
+          `  ${id}/                 the pack — upload this folder`,
+          `  ${id}-card.yaml        paste into a dashboard card`,
+          `  ${id}.domoview.json    your editable source — keep it`,
+          '',
+          '1. Upload the folder to Home Assistant so that',
+          `     /config/www/domoview/homes/${id}/home.json`,
+          '   exists. File Editor, Samba or the VS Code add-on all work.',
+          '',
+          '2. Open the card YAML, replace each \'\' with one of your',
+          '   entities, and paste it into Edit dashboard → Add card',
+          '   → Manual.',
+          '',
+          'Keep the YAML and the project file out of /config/www:',
+          'anything under www is served without authentication.',
+        ].join('\n');
+      })()),
     ]);
   }
 
@@ -409,6 +438,15 @@ class Studio {
         { name: `${name}/home.json`, content: `${JSON.stringify(manifest, null, 2)}\n` },
         { name: `${name}/model.glb`, content: buffer },
         { name: `${name}/README.txt`, content: readmeFor(name, data) },
+        // Siblings of the pack folder, deliberately not inside it. Everything
+        // under /config/www is served without authentication: the card YAML
+        // lists entity ids once filled in, and the project file embeds the
+        // floor plan image and any photos.
+        {
+          name: `${name}-card.yaml`,
+          content: buildCardYaml(manifest, { version: STUDIO_VERSION }),
+        },
+        { name: `${name}.domoview.json`, content: this.project.toJSON() },
       ];
 
       if (this.includePhotos) {
@@ -441,6 +479,15 @@ class Studio {
     } catch (error) {
       toast(`Export failed: ${error.message}`, 'error');
     }
+  }
+
+  exportCardYaml() {
+    const manifest = buildManifest(this.project.data, { version: STUDIO_VERSION });
+    const name = slugify(this.project.data.meta.id || this.project.data.meta.name, 'home');
+    downloadBlob(
+      new Blob([buildCardYaml(manifest, { version: STUDIO_VERSION })], { type: 'text/yaml' }),
+      `${name}-card.yaml`,
+    );
   }
 
   exportManifestOnly() {
@@ -487,17 +534,24 @@ function readmeFor(name, data) {
     'Install',
     '-------',
     `1. Copy this folder to /config/www/domoview/homes/${name}/`,
-    '2. Add the DomoView card to a dashboard and set:',
+    `   so that /config/www/domoview/homes/${name}/home.json exists.`,
     '',
-    '     type: custom:domoview-card',
-    `     home: /local/domoview/homes/${name}`,
+    `2. Open ${name}-card.yaml, which came alongside this folder in the zip.`,
+    '   It lists every fixture, blind, window contact and room this pack',
+    '   defines. Replace each \'\' with one of your entities.',
     '',
-    '3. Open the card editor and map each fixture to a Home Assistant entity.',
+    '3. Paste it into Edit dashboard -> + Add card -> Manual.',
+    '   The card\'s visual editor offers the same keys with entity pickers,',
+    '   if you would rather click than type.',
     '',
     'Contents',
     '--------',
     'home.json   the manifest: rooms, walls, windows, fixtures, cameras',
     'model.glb   the geometry, Y-up glTF-Binary',
+    '',
+    'The card YAML and the project file are NOT in this folder on purpose.',
+    'Everything under /config/www is served without authentication, and',
+    'those two contain your entity ids and your floor plan image.',
     '',
     'Documentation: https://github.com/tomjschr/interactive_floormap',
   ].filter(line => line !== null).join('\n');

@@ -10,6 +10,47 @@ schema bump is called out explicitly here.
 
 ## [Unreleased]
 
+### Added
+
+- **The Studio now exports the dashboard card YAML.** A pack carries no entity
+  ids by design, which previously meant reading `home.json` to find out which
+  keys exist. The export writes a `<pack>-card.yaml` listing every fixture,
+  blind, window contact and room, grouped by room and labelled, each with an
+  empty placeholder to fill in. There is a separate download button for it too.
+- The standalone `domoview-studio.zip` now ships its own server and a README,
+  so it runs on a PC without checking the repository out: unzip and
+  `node serve.mjs`. ES modules cannot be loaded over `file://`, so opening
+  `index.html` directly does not work and the README says so.
+- `tools/pack/compare-glb.mjs` compares two glTF files structurally — node
+  tree, mesh and material inventory, index topology, and numeric accessors
+  within a tolerance.
+
+### Changed
+
+- The export zip puts the card YAML and the project file **beside** the pack
+  folder rather than inside it. Everything under `/config/www` is served
+  without authentication, and those two files contain entity ids and the floor
+  plan image respectively.
+- CI no longer asserts the demo model is byte-identical after regeneration.
+  `Math.sin` and friends are not specified to be bit-identical between V8
+  versions and those last bits land in float32 vertices, so the check failed
+  between Node 22 and Node 24 on geometry that was correct in both. The
+  manifest is still compared byte for byte; the model is compared
+  structurally.
+
+### Fixed
+
+- A pack may now ship baked images without a GLB. `model.url` was required,
+  which made a pack migrated from a purely image-based card impossible to
+  express.
+- The baked renderer left its canvases blank after a resize large enough to
+  change the composite resolution: `rebuild()` re-applied the scene before
+  clearing the guard that `apply()` checks.
+- "Fixture has neither emitters nor a GLB node" was reported for every fixture
+  in a baked pack, where a baked light delta is all the renderer needs. The
+  validator's copy of that check is also scoped to light-emitting kinds now, so
+  a speaker or an oven is no longer reported as a lightless light.
+
 ## [0.1.0] - 2026-09-28
 
 First public release. Home Pack schema version **1**.

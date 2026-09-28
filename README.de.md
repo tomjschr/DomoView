@@ -105,8 +105,16 @@ im Browser öffnen. Es wird nichts hochgeladen, alles läuft lokal.
 9. **Vorschau** — der Renderer der Karte, auf deinem Modell. Tageszeit
    durchschieben und Rollos schließen, bevor Home Assistant überhaupt
    angefasst wird.
-10. **Export** — ZIP herunterladen, nach
-    `/config/www/domoview/homes/<dein-pack>/` entpacken.
+10. **Export** — das ZIP enthält den Pack-Ordner zum Hochladen, eine fertige
+    **Karten-YAML** mit allen Leuchten, Rollos, Fensterkontakten und Räumen
+    zum Zuordnen, und deine bearbeitbare Projektdatei. Den Ordner nach
+    `/config/www/domoview/homes/<dein-pack>/` hochladen, die YAML in eine
+    manuelle Karte einfügen und die Entitäten eintragen.
+
+    Karten-YAML und Projektdatei liegen absichtlich **neben** dem Pack-Ordner,
+    nicht darin: alles unter `/config/www` wird ohne Authentifizierung
+    ausgeliefert, und die beiden enthalten deine Entity-IDs beziehungsweise
+    dein Grundrissbild.
 
 Das Studio läuft nach der Installation auch offline aus der eigenen Instanz:
 `/local/domoview/studio/index.html`.
