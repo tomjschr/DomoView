@@ -1,6 +1,6 @@
 {
   "name": "domoview",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Interactive 3D floor plan card for Home Assistant, driven by a shareable Home Pack (GLB + manifest)",
   "license": "MIT",
   "type": "module",

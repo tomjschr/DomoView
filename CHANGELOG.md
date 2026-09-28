@@ -10,6 +10,8 @@ schema bump is called out explicitly here.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-28
+
 ### Added
 
 - **The Studio now exports the dashboard card YAML.** A pack carries no entity
@@ -24,6 +26,11 @@ schema bump is called out explicitly here.
 - `tools/pack/compare-glb.mjs` compares two glTF files structurally — node
   tree, mesh and material inventory, index topology, and numeric accessors
   within a tolerance.
+- Two labelled screenshots in the READMEs: a hand-modelled home, and what the
+  Studio produces from a traced floor plan. Showing only the first would
+  promise a look that tracing a plan does not give you.
+- The build refuses to run when the version literals in the card and the Studio
+  drift from `package.json`.
 
 ### Changed
 
@@ -40,6 +47,9 @@ schema bump is called out explicitly here.
 
 ### Fixed
 
+- The card painted one vertically squashed frame on load. The renderer sized
+  itself during init, before the scene’s aspect ratio was applied, and only the
+  ResizeObserver corrected it a frame or two later.
 - A pack may now ship baked images without a GLB. `model.url` was required,
   which made a pack migrated from a purely image-based card impossible to
   express.
@@ -101,5 +111,6 @@ First public release. Home Pack schema version **1**.
   that home's geometry or entity ids are in this repository; the example pack
   is invented.
 
-[Unreleased]: https://github.com/tomjschr/DomoView/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/tomjschr/DomoView/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/tomjschr/DomoView/releases/tag/v0.1.1
 [0.1.0]: https://github.com/tomjschr/DomoView/releases/tag/v0.1.0

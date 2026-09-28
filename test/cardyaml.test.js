@@ -15,6 +15,8 @@ import { normalisePack } from '../src/core/pack.js';
 import { HomeState } from '../src/core/hass.js';
 
 const packDir = path.join(import.meta.dirname, '../examples/demo-apartment');
+const { version: VERSION } = JSON.parse(
+  await readFile(path.join(import.meta.dirname, '../package.json'), 'utf8'));
 
 /** Parse strictly, and fail on anything the parser is unhappy about. */
 function parseYaml(text) {
@@ -30,7 +32,7 @@ let config;
 
 before(async () => {
   manifest = JSON.parse(await readFile(path.join(packDir, 'home.json'), 'utf8'));
-  yaml = buildCardYaml(manifest, { version: '0.1.0' });
+  yaml = buildCardYaml(manifest, { version: VERSION });
   config = parseYaml(yaml);
 });
 
@@ -126,7 +128,7 @@ describe('card YAML', () => {
     awkward.pack.name = "Tom's \"place\"\nsecond line";
     awkward.rooms[0].name = "Kitchen # not a comment";
     awkward.fixtures[0].name = "Lamp: with a colon";
-    const text = buildCardYaml(awkward, { version: '0.1.0' });
+    const text = buildCardYaml(awkward, { version: VERSION });
     const parsed = parseYaml(text);
     assert.equal(parsed.type, 'custom:domoview-card');
     assert.ok(Object.keys(parsed.entities).length > 0);
@@ -147,7 +149,7 @@ describe('card YAML', () => {
       pack: { schema: 1, id: 'bare', name: 'Bare' },
       model: { url: 'model.glb' },
     };
-    const parsed = parseYaml(buildCardYaml(bare, { version: '0.1.0' }));
+    const parsed = parseYaml(buildCardYaml(bare, { version: VERSION }));
     assert.equal(parsed.home, '/local/domoview/homes/bare');
     assert.deepEqual(parsed.entities, {});
     assert.deepEqual(parsed.covers, {});
