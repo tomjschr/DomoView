@@ -45,7 +45,7 @@ jobs:
           sed -i "s|'../dist/domoview.js'|'./dist/domoview.js'|" site/index.html
           sed -i "s|'../examples/demo-apartment'|'./examples/demo-apartment'|" site/index.html
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
