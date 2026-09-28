@@ -3,6 +3,8 @@
 An interactive 3D floor plan for Home Assistant. Your home as a live doll-house
 view, driven by your entity states.
 
+![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images.](https://raw.githubusercontent.com/tomjschr/interactive_floormap/main/docs/images/pipeline.svg)
+
 - **Lights are lights.** Brightness and colour from a `light.*` entity drive a
   real light source in the scene.
 - **The sun is where the sun is.** Daylight enters through the windows you
