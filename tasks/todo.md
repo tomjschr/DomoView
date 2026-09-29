@@ -2,8 +2,8 @@
 
 ## Phase 1: Localhost foundation
 
-- [ ] Task 1: Define the localhost server contract
-- [ ] Task 2: Add workspace-safe project storage
+- [x] Task 1: Define the localhost server contract
+- [x] Task 2: Add workspace-safe project storage
 - [ ] Task 3: Add asset upload and content hashing
 
 ### Checkpoint A
@@ -76,4 +76,3 @@
 - [ ] Anthropic, OpenAI and OpenCode share one provider contract
 - [ ] AI edits are typed, validated, previewed and reversible
 - [ ] Full tests, lint and production builds pass
-

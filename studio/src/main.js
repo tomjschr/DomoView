@@ -6,6 +6,7 @@
  */
 
 import { Project, projectStatus, slugify } from './project.js';
+import { LocalProjectClient } from './project-client.js';
 import { Viewport } from './viewport.js';
 import { PlanRenderer } from './render2d.js';
 import { Editor } from './editor.js';
@@ -23,6 +24,7 @@ import {
 
 const STUDIO_VERSION = '0.1.1';
 const STORAGE_KEY = 'domoview.studio.project';
+const WORKSPACE_KEY = 'domoview.studio.workspace-project';
 
 /** Each step binds a canvas tool and a short instruction. */
 const STEPS = [
@@ -42,11 +44,14 @@ class Studio {
   constructor(root) {
     this.root = root;
     this.project = restoreProject();
+    this.localProjects = new LocalProjectClient();
+    this.workspaceRecord = restoreWorkspaceRecord();
     this.step = 'plan';
     this.build();
     this.project.subscribe(() => this.onProjectChange());
     this.setStep('plan');
     this.loadBackdrop();
+    void this.initLocalServer();
   }
 
   build() {
@@ -77,6 +82,18 @@ class Studio {
           button('New', () => this.newProject(), { class: 'ghost' }),
           button('Open…', () => this.openProject(), { class: 'ghost' }),
           button('Save project', () => this.saveProject(), { class: 'ghost' }),
+          (() => {
+            this.openWorkspaceButton = button('Open workspace…', () => this.openWorkspaceProject(), {
+              class: 'ghost', hidden: true,
+            });
+            return this.openWorkspaceButton;
+          })(),
+          (() => {
+            this.saveWorkspaceButton = button('Save to workspace', () => this.saveWorkspaceProject(), {
+              class: 'ghost', hidden: true,
+            });
+            return this.saveWorkspaceButton;
+          })(),
           button('Undo', () => this.project.undo(), { class: 'ghost', title: 'Ctrl+Z' }),
           button('Redo', () => this.project.redo(), { class: 'ghost', title: 'Ctrl+Shift+Z' }),
           button('Export pack', () => { this.setStep('export'); }, { class: 'primary' }),
@@ -297,6 +314,12 @@ class Studio {
 
   // -- project persistence --------------------------------------------------
 
+  async initLocalServer() {
+    if (!await this.localProjects.available()) return;
+    this.openWorkspaceButton.hidden = false;
+    this.saveWorkspaceButton.hidden = false;
+  }
+
   onProjectChange() {
     this.editor.project = this.project;
     this.preview.project = this.project;
@@ -320,6 +343,7 @@ class Studio {
   newProject() {
     if (!confirm('Discard the current project and start over?')) return;
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(WORKSPACE_KEY);
     location.reload();
   }
 
@@ -340,18 +364,67 @@ class Studio {
     try {
       const text = await file.text();
       const loaded = Project.fromJSON(text);
-      this.project = loaded;
-      this.editor.project = loaded;
-      this.preview.project = loaded;
-      this.photos.project = loaded;
-      loaded.subscribe(() => this.onProjectChange());
-      await this.loadBackdrop();
-      this.preview.markStale();
-      this.renderSide();
+      this.workspaceRecord = null;
+      localStorage.removeItem(WORKSPACE_KEY);
+      await this.replaceProject(loaded);
       toast(`Opened ${file.name}`, 'info');
     } catch (error) {
       toast(`Could not open that project: ${error.message}`, 'error');
     }
+  }
+
+  async openWorkspaceProject() {
+    try {
+      const projects = await this.localProjects.list();
+      if (!projects.length) {
+        toast('The local workspace has no projects yet.', 'info');
+        return;
+      }
+      const options = projects.map(project =>
+        `${project.id} — ${project.name} (revision ${project.revision})`).join('\n');
+      const id = window.prompt(`Open which workspace project?\n\n${options}`, projects[0].id)?.trim();
+      if (!id) return;
+      const record = await this.localProjects.get(id);
+      await this.replaceProject(Project.fromJSON(JSON.stringify(record.project)));
+      this.setWorkspaceRecord({ id: record.id, revision: record.revision });
+      toast(`Opened ${record.id} from the local workspace.`, 'info');
+    } catch (error) {
+      toast(`Could not open workspace project: ${error.message}`, 'error');
+    }
+  }
+
+  async saveWorkspaceProject() {
+    try {
+      const raw = JSON.parse(this.project.toJSON());
+      const record = this.workspaceRecord
+        ? await this.localProjects.update(this.workspaceRecord.id, this.workspaceRecord.revision, raw)
+        : await this.localProjects.create(raw, slugify(raw.meta?.id || raw.meta?.name, 'project'));
+      this.setWorkspaceRecord({ id: record.id, revision: record.revision });
+      toast(`Saved ${record.id} at revision ${record.revision}.`, 'ok');
+    } catch (error) {
+      if (error.code === 'revision_conflict') {
+        toast('This workspace project changed elsewhere. Open it again before saving.', 'error');
+      } else {
+        toast(`Could not save workspace project: ${error.message}`, 'error');
+      }
+    }
+  }
+
+  setWorkspaceRecord(record) {
+    this.workspaceRecord = record;
+    localStorage.setItem(WORKSPACE_KEY, JSON.stringify(record));
+  }
+
+  async replaceProject(project) {
+    this.project = project;
+    this.editor.project = project;
+    this.preview.project = project;
+    this.photos.project = project;
+    project.subscribe(() => this.onProjectChange());
+    await this.loadBackdrop();
+    this.preview.markStale();
+    this.renderSide();
+    this.persist();
   }
 
   // -- export ---------------------------------------------------------------
@@ -508,7 +581,17 @@ function restoreProject() {
   } catch (error) {
     console.warn('DomoView Studio: autosave could not be restored', error);
   }
+
   return new Project();
+}
+
+function restoreWorkspaceRecord() {
+  try {
+    const record = JSON.parse(localStorage.getItem(WORKSPACE_KEY));
+    return typeof record?.id === 'string' && Number.isInteger(record.revision) ? record : null;
+  } catch {
+    return null;
+  }
 }
 
 function dataUrlToBytes(dataUrl) {
