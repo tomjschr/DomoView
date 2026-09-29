@@ -4,14 +4,14 @@
 
 - [x] Task 1: Define the localhost server contract
 - [x] Task 2: Add workspace-safe project storage
-- [ ] Task 3: Add asset upload and content hashing
+- [x] Task 3: Add asset upload and content hashing
 
 ### Checkpoint A
 
-- [ ] Local Studio starts with one command
-- [ ] Static/offline Studio still works
-- [ ] Projects and assets survive restart
-- [ ] Tests, lint and build pass
+- [x] Local Studio starts with one command
+- [x] Static/offline Studio still works
+- [x] Projects and assets survive restart
+- [x] Tests, lint and build pass
 
 ## Phase 2: Safe mutation protocol
 

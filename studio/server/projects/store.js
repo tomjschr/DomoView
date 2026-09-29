@@ -2,6 +2,8 @@ import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { AssetStore } from './assets.js';
+
 const ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,79}$/;
 
 export class ProjectStoreError extends Error {
@@ -51,10 +53,14 @@ function parseRecord(text, id) {
 export class ProjectStore {
   constructor(workspace) {
     this.root = path.join(path.resolve(workspace), 'projects');
+    this.assets = new AssetStore(workspace);
   }
 
   async init() {
-    await mkdir(this.root, { recursive: true });
+    await Promise.all([
+      mkdir(this.root, { recursive: true }),
+      this.assets.init(),
+    ]);
     return this;
   }
 
@@ -86,9 +92,18 @@ export class ProjectStore {
       if (error.code === 'ENOENT') {
         throw new ProjectStoreError('not_found', `Project "${safeId}" does not exist.`);
       }
+
       if (error instanceof ProjectStoreError) throw error;
       throw error;
     }
+  }
+
+  async getHydrated(id) {
+    const record = await this.get(id);
+    return {
+      ...record,
+      project: await this.assets.hydrateProject(record.project),
+    };
   }
 
   async create(project, requestedId) {
@@ -103,7 +118,7 @@ export class ProjectStore {
       }
       throw error;
     });
-    const record = { revision: 1, project };
+    const record = { revision: 1, project: await this.assets.externalizeProject(project) };
     await this.write(id, record);
     return { id, ...record };
   }
@@ -122,7 +137,10 @@ export class ProjectStore {
         `Project is at revision ${current.revision}, not ${revision}.`,
       );
     }
-    const record = { revision: revision + 1, project };
+    const record = {
+      revision: revision + 1,
+      project: await this.assets.externalizeProject(project),
+    };
     await this.write(current.id, record);
     return { id: current.id, ...record };
   }
@@ -135,5 +153,15 @@ export class ProjectStore {
       flag: 'wx',
     });
     await rename(temporary, target);
+  }
+
+  async getAsset(id, reference) {
+    const record = await this.get(id);
+    const referenced = record.project.plan?.image === reference ||
+      (record.project.photos || []).some(photo => photo.dataUrl === reference);
+    if (!referenced) {
+      throw new ProjectStoreError('not_found', 'Asset is not referenced by this project.');
+    }
+    return this.assets.get(reference);
   }
 }

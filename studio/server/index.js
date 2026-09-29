@@ -122,7 +122,16 @@ export async function createLocalStudioServer(options = {}) {
     }
     const projectResult = await projectApi(request, url, projects);
     if (projectResult) {
-      json(response, projectResult.status, projectResult.body, projectResult.headers);
+      if (projectResult.binary) {
+        response.writeHead(projectResult.status, {
+          'content-type': projectResult.type,
+          'cache-control': 'private, max-age=31536000, immutable',
+          'x-content-type-options': 'nosniff',
+        });
+        response.end(projectResult.binary);
+      } else {
+        json(response, projectResult.status, projectResult.body, projectResult.headers);
+      }
       return;
     }
     if (url.pathname.startsWith('/api/')) {
