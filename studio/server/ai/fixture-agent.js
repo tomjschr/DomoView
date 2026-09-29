@@ -117,6 +117,8 @@ function operationsFor(toolCalls, fixtureId) {
 
 export async function runFixtureAgent(input) {
   const context = fixtureContext(input.project, input.fixtureId);
+  const history = (input.history || []).filter(message =>
+    ['user', 'assistant'].includes(message?.role) && typeof message.content === 'string');
   const request = {
     system: [
       'You edit one selected DomoView light fixture.',
@@ -124,9 +126,10 @@ export async function runFixtureAgent(input) {
       'Keep changes minimal and preserve values the user did not ask to change.',
       'Plan X/Y coordinates are pixels. Emitter height and move Z are metres.',
       'A proposal is reviewed visually before it can be applied.',
+      input.summary ? `Accepted-session summary:\n${input.summary}` : '',
       `Current context:\n${JSON.stringify(context)}`,
-    ].join('\n\n'),
-    messages: [{ role: 'user', content: input.message }],
+    ].filter(Boolean).join('\n\n'),
+    messages: [...history, { role: 'user', content: input.message }],
     tools: toolDefinitions(input.project.rooms.map(room => room.id)),
     maxTokens: 1200,
     signal: input.signal,
@@ -152,4 +155,3 @@ export async function runFixtureAgent(input) {
     model: finalResponse.model,
   };
 }
-

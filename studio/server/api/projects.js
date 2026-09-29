@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer';
 import { AssetStoreError } from '../projects/assets.js';
 import { ProposalError } from '../projects/proposals.js';
 import { ProjectStoreError } from '../projects/store.js';
+import { SessionStoreError } from '../ai/sessions.js';
 
 const MAX_PROJECT_BYTES = 25 * 1024 * 1024;
 
@@ -34,7 +35,7 @@ function errorStatus(code) {
   return 400;
 }
 
-export async function projectApi(request, url, store, proposals) {
+export async function projectApi(request, url, store, proposals, sessions) {
   const proposalCollection = /^\/api\/v1\/projects\/([^/]+)\/proposals$/.exec(url.pathname);
   const proposalAction =
     /^\/api\/v1\/projects\/([^/]+)\/proposals\/([^/]+)\/(apply|reject)$/.exec(url.pathname);
@@ -77,10 +78,21 @@ export async function projectApi(request, url, store, proposals) {
         throw new ProposalError('proposal_not_found', 'Proposal does not exist.');
       }
       if (proposalAction[3] === 'reject') {
-        return { status: 200, body: await proposals.reject(proposalId) };
+        const proposal = await proposals.reject(proposalId);
+        sessions?.markProposal(proposalId, 'rejected');
+        return { status: 200, body: proposal };
       }
       const input = await readJson(request);
-      return { status: 200, body: await proposals.apply(proposalId, input.indexes) };
+      const result = await proposals.apply(proposalId, input.indexes);
+      const acceptedSummaries = result.proposal.selected
+        .map(index => result.proposal.summaries[index]);
+      sessions?.markProposal(
+        proposalId,
+        'applied',
+        result.project.revision,
+        acceptedSummaries,
+      );
+      return { status: 200, body: result };
     }
     if (proposalAction) return { status: 405, headers: { allow: 'POST' }, body: null };
     if (assetMatch && request.method === 'GET') {
@@ -115,7 +127,8 @@ export async function projectApi(request, url, store, proposals) {
   } catch (error) {
     if (!(error instanceof ProjectStoreError) &&
         !(error instanceof AssetStoreError) &&
-        !(error instanceof ProposalError)) throw error;
+        !(error instanceof ProposalError) &&
+        !(error instanceof SessionStoreError)) throw error;
     return {
       status: ['asset_not_found', 'proposal_not_found'].includes(error.code)
         ? 404

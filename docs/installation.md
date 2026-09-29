@@ -140,6 +140,12 @@ the assistant response and creates typed fixture operations. The proposed
 result is rendered in the normal 2D/3D preview and must be explicitly applied
 or rejected; the provider never writes the project directly.
 
+Fixture conversations, normalized usage, tool calls and proposal decisions are
+stored in the local workspace SQLite database. Reopening the same workspace
+and fixture resumes its conversation. Only a bounded recent message window and
+the summary associated with the currently accepted project revision are sent
+back to the provider.
+
 **From your own Home Assistant.** A DomoView install contains its own copy:
 
 ```

@@ -96,6 +96,7 @@ describe('fixture agent API', () => {
       'status', 'text_delta', 'status', 'proposal',
     ]);
     const result = events.at(-1).data;
+    assert.match(result.sessionId, /^[a-f0-9-]{36}$/);
     assert.equal(result.usage.cacheReadTokens, 50);
     assert.equal(result.proposal.status, 'pending');
     assert.deepEqual(result.proposal.operations, [{
@@ -107,6 +108,27 @@ describe('fixture agent API', () => {
       `${baseUrl}/api/v1/projects/agent-project/proposals/${result.proposal.id}`,
     ).then(item => item.json());
     assert.equal(stored.draft.fixtures.find(fixture => fixture.id === 'fx_1').shadow, true);
+    const resumed = await fetch(
+      `${baseUrl}/api/v1/projects/agent-project/agents/fixture-edit?fixtureId=fx_1`,
+    ).then(item => item.json());
+    assert.equal(resumed.session.id, result.sessionId);
+    assert.deepEqual(
+      resumed.session.messages.map(message => message.role),
+      ['user', 'assistant'],
+    );
+
+    const applied = await fetch(
+      `${baseUrl}/api/v1/projects/agent-project/proposals/${result.proposal.id}/apply`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ indexes: [0] }),
+      },
+    ).then(item => item.json());
+    const accepted = await fetch(
+      `${baseUrl}/api/v1/projects/agent-project/agents/fixture-edit?fixtureId=fx_1`,
+    ).then(item => item.json());
+    assert.equal(accepted.session.contextRevision, applied.project.revision);
+    assert.match(accepted.session.summary, /Fixture "fx_1": update/);
   });
 });
-

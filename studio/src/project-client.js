@@ -116,13 +116,20 @@ export class LocalProjectClient {
     );
   }
 
-  async fixtureEdit(id, revision, fixtureId, message, onEvent) {
+  fixtureSession(id, fixtureId) {
+    return apiJson(
+      `${this.base}/api/v1/projects/${encodeURIComponent(id)}/agents/fixture-edit` +
+      `?fixtureId=${encodeURIComponent(fixtureId)}`,
+    ).then(result => result.session);
+  }
+
+  async fixtureEdit(id, revision, fixtureId, message, sessionId, onEvent) {
     const response = await fetch(
       `${this.base}/api/v1/projects/${encodeURIComponent(id)}/agents/fixture-edit`,
       {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ revision, fixtureId, message }),
+        body: JSON.stringify({ revision, fixtureId, message, sessionId }),
       },
     );
     return readEventStream(response, onEvent);

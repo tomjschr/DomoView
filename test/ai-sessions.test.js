@@ -22,7 +22,7 @@ describe('AI session store', () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  test('persists messages, calls, tools and accepted revision summaries', () => {
+  test('persists messages, calls, tools and accepted revision summaries', async () => {
     const session = store.getOrCreate('project', 'fixture', 3);
     store.addMessage(session.id, 'user', 'Make it warmer.');
     const callId = store.beginCall(session.id);
@@ -44,6 +44,8 @@ describe('AI session store', () => {
     });
     store.markProposal('proposal', 'applied', 4, ['Fixture "fixture": update']);
 
+    store.close();
+    store = await new SessionStore(root).init();
     const restored = store.publicSession(session.id);
     assert.deepEqual(restored.messages.map(message => message.role), ['user', 'assistant']);
     assert.equal(restored.contextRevision, 4);
@@ -62,4 +64,3 @@ describe('AI session store', () => {
     );
   });
 });
-

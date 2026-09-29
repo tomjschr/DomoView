@@ -48,6 +48,8 @@ class Studio {
     this.localProjects = new LocalProjectClient();
     this.workspaceRecord = restoreWorkspaceRecord();
     this.fixtureChats = new Map();
+    this.fixtureSessions = new Map();
+    this.fixtureSessionLoads = new Set();
     this.aiConfigured = false;
     this.step = 'plan';
     this.build();
@@ -365,6 +367,10 @@ class Studio {
         el('p', { class: 'note' }, 'Select a light to edit it in conversation.'),
       ]);
     }
+    if (this.workspaceRecord && !this.fixtureSessions.has(selected.id) &&
+        !this.fixtureSessionLoads.has(selected.id)) {
+      void this.loadFixtureSession(selected.id);
+    }
     const chat = this.fixtureChats.get(selected.id) || [];
     const messages = el('div', { class: 'fixture-chat-log' },
       chat.map(message => el('div', {
@@ -422,6 +428,7 @@ class Studio {
         this.workspaceRecord.revision,
         fixtureId,
         content,
+        this.fixtureSessions.get(fixtureId)?.id,
         (event, data) => {
           if (event === 'text_delta') {
             assistant.content += data.text;
@@ -431,6 +438,7 @@ class Studio {
           }
         },
       );
+      this.fixtureSessions.set(fixtureId, { id: result.sessionId });
       const usage = result.usage || {};
       assistant.content ||= result.assistantText || 'Prepared a proposal.';
       assistant.meta = [
@@ -446,6 +454,32 @@ class Studio {
       assistant.content ||= `Could not create proposal: ${error.message}`;
       assistant.meta = error.retryable ? 'Temporary provider error' : 'Request failed';
       this.renderSide();
+    }
+  }
+
+  async loadFixtureSession(fixtureId) {
+    this.fixtureSessionLoads.add(fixtureId);
+    try {
+      const session = await this.localProjects.fixtureSession(
+        this.workspaceRecord.id,
+        fixtureId,
+      );
+      this.fixtureSessions.set(fixtureId, session);
+      if (session) {
+        this.fixtureChats.set(fixtureId, session.messages.map(message => ({
+          role: message.role,
+          content: message.content,
+        })));
+      }
+    } catch (error) {
+      toast(`Could not resume AI session: ${error.message}`, 'warn');
+      this.fixtureSessions.set(fixtureId, null);
+    } finally {
+      this.fixtureSessionLoads.delete(fixtureId);
+      if (this.editor.selected?.collection === 'fixtures' &&
+          this.editor.selected.id === fixtureId) {
+        this.renderSide();
+      }
     }
   }
 
@@ -542,6 +576,7 @@ class Studio {
   setWorkspaceRecord(record) {
     this.workspaceRecord = record;
     localStorage.setItem(WORKSPACE_KEY, JSON.stringify(record));
+    this.renderSide();
   }
 
   async replaceProject(project, options = {}) {

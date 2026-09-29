@@ -47,8 +47,24 @@ function publicError(error) {
 export async function fixtureAgentApi(request, url, response, dependencies) {
   const match = /^\/api\/v1\/projects\/([^/]+)\/agents\/fixture-edit$/.exec(url.pathname);
   if (!match) return false;
+  const projectId = decodeURIComponent(match[1]);
+  if (request.method === 'GET') {
+    const fixtureId = url.searchParams.get('fixtureId');
+    if (!fixtureId) {
+      response.writeHead(400, { 'content-type': 'application/json; charset=utf-8' });
+      response.end(JSON.stringify({ error: 'invalid_fixture', message: 'A fixture id is required.' }));
+      return true;
+    }
+    const session = dependencies.sessions.latest(projectId, fixtureId);
+    response.writeHead(200, {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+    });
+    response.end(JSON.stringify({ session }));
+    return true;
+  }
   if (request.method !== 'POST') {
-    response.writeHead(405, { allow: 'POST' }).end();
+    response.writeHead(405, { allow: 'GET, POST' }).end();
     return true;
   }
   response.writeHead(200, {
@@ -57,6 +73,7 @@ export async function fixtureAgentApi(request, url, response, dependencies) {
     connection: 'keep-alive',
     'x-content-type-options': 'nosniff',
   });
+  let callId;
   try {
     const input = await readJson(request);
     if (!Number.isInteger(input.revision) || input.revision < 1) {
@@ -71,7 +88,6 @@ export async function fixtureAgentApi(request, url, response, dependencies) {
         'Message must contain between 1 and 4000 characters.',
       );
     }
-    const projectId = decodeURIComponent(match[1]);
     const current = await dependencies.projects.get(projectId);
     if (current.revision !== input.revision) {
       throw new FixtureAgentError(
@@ -82,23 +98,42 @@ export async function fixtureAgentApi(request, url, response, dependencies) {
     const provider = dependencies.providerFactory
       ? dependencies.providerFactory('executor')
       : createRoleProvider(dependencies.aiConfig, 'executor');
+    const session = dependencies.sessions.getOrCreate(
+      projectId,
+      input.fixtureId,
+      current.revision,
+      input.sessionId,
+    );
+    const context = dependencies.sessions.context(session.id, current.revision);
+    dependencies.sessions.addMessage(session.id, 'user', input.message.trim());
+    callId = dependencies.sessions.beginCall(session.id);
     writeEvent(response, 'status', { stage: 'thinking' });
     const result = await runFixtureAgent({
       project: current.project,
       fixtureId: input.fixtureId,
       message: input.message.trim(),
+      history: context.messages,
+      summary: context.summary,
       provider,
       signal: globalThis.AbortSignal.timeout(90_000),
       onEvent(event) {
         writeEvent(response, event.type, event);
       },
     });
+    dependencies.sessions.completeCall(callId, result);
+    dependencies.sessions.addMessage(
+      session.id,
+      'assistant',
+      result.assistantText || 'Prepared a fixture proposal.',
+    );
     const proposal = await dependencies.proposals.create(
       projectId,
       current.revision,
       result.operations,
     );
+    dependencies.sessions.linkProposal(session.id, callId, proposal);
     writeEvent(response, 'proposal', {
+      sessionId: session.id,
       assistantText: result.assistantText,
       provider: result.provider,
       model: result.model,
@@ -106,6 +141,7 @@ export async function fixtureAgentApi(request, url, response, dependencies) {
       proposal,
     });
   } catch (error) {
+    if (callId) dependencies.sessions.failCall(callId, error);
     if (!(error instanceof FixtureAgentError) &&
         !(error instanceof ProviderError) &&
         !(error instanceof ProposalError) &&
@@ -118,4 +154,3 @@ export async function fixtureAgentApi(request, url, response, dependencies) {
   }
   return true;
 }
-
