@@ -12,22 +12,30 @@ function text(value) {
 
 function providerConfig(id, file = {}, env = process.env) {
   const prefix = id.toUpperCase();
-  const apiKey = text(env[`DOMOVIEW_${prefix}_API_KEY`]) ||
-    text(env[id === 'anthropic' ? 'ANTHROPIC_API_KEY' : id === 'openai' ? 'OPENAI_API_KEY' : '']) ||
+  const standardKeyName = id === 'anthropic'
+    ? 'ANTHROPIC_API_KEY'
+    : id === 'openai'
+      ? 'OPENAI_API_KEY'
+      : null;
+  const environmentApiKey = text(env[`DOMOVIEW_${prefix}_API_KEY`]) ||
+    text(standardKeyName ? env[standardKeyName] : null);
+  const environmentBaseUrl = text(env[`DOMOVIEW_${prefix}_BASE_URL`]);
+  const environmentModel = text(env[`DOMOVIEW_${prefix}_MODEL`]);
+  const apiKey = environmentApiKey ||
     text(file.apiKey);
-  const baseUrl = text(env[`DOMOVIEW_${prefix}_BASE_URL`]) ||
+  const baseUrl = environmentBaseUrl ||
     text(file.baseUrl) ||
     (id === 'anthropic' ? 'https://api.anthropic.com'
       : id === 'openai' ? 'https://api.openai.com'
       : null);
-  const model = text(env[`DOMOVIEW_${prefix}_MODEL`]) || text(file.model);
+  const model = environmentModel || text(file.model);
   return {
     id,
     apiKey,
     baseUrl,
     model,
     configured: id === 'opencode' ? !!baseUrl : !!apiKey,
-    source: apiKey || baseUrl !== file.baseUrl ? 'environment' : 'file',
+    source: environmentApiKey || environmentBaseUrl || environmentModel ? 'environment' : 'file',
   };
 }
 
@@ -97,4 +105,3 @@ export function redactSecrets(value) {
     SECRET_KEY.test(key) ? '[redacted]' : redactSecrets(entry),
   ]));
 }
-

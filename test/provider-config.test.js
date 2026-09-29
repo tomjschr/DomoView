@@ -37,7 +37,9 @@ describe('AI provider configuration', () => {
     });
     assert.equal(config.providers.anthropic.apiKey, 'env-secret');
     assert.equal(config.providers.anthropic.model, 'env-model');
+    assert.equal(config.providers.anthropic.source, 'environment');
     assert.equal(config.providers.opencode.configured, true);
+    assert.equal(config.providers.opencode.source, 'file');
     assert.equal(config.roles.executor.provider, 'opencode');
     assert.equal(config.roles.executor.model, 'executor-model');
   });
@@ -74,4 +76,3 @@ describe('AI provider configuration', () => {
     await assert.rejects(loadAIConfig({ file, env: {} }), /Unknown provider/);
   });
 });
-

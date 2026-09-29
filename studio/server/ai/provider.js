@@ -75,3 +75,24 @@ export async function providerResponse(response, provider) {
   );
 }
 
+export async function providerFetch(fetchImpl, url, init, provider, options = {}) {
+  const timeoutMs = options.timeoutMs || 60_000;
+  const timeout = globalThis.AbortSignal.timeout(timeoutMs);
+  const signal = options.signal
+    ? globalThis.AbortSignal.any([options.signal, timeout])
+    : timeout;
+  let response;
+  try {
+    response = await fetchImpl(url, { ...init, signal });
+  } catch (error) {
+    if (signal.aborted || error?.name === 'AbortError') {
+      throw new ProviderError(provider, 'timeout', `${provider} request was cancelled or timed out.`, {
+        retryable: !options.signal?.aborted,
+      });
+    }
+    throw new ProviderError(provider, 'network', `${provider} request could not reach the provider.`, {
+      retryable: true,
+    });
+  }
+  return providerResponse(response, provider);
+}

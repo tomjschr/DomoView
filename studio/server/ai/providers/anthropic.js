@@ -1,5 +1,5 @@
 import {
-  parseToolInput, providerResponse, usage, validateProviderRequest,
+  parseToolInput, providerFetch, usage, validateProviderRequest,
 } from '../provider.js';
 import { parseSse } from '../sse.js';
 
@@ -65,12 +65,12 @@ export class AnthropicProvider {
   }
 
   async complete(request) {
-    const response = await this.request(bodyFor(request, this.config, false));
+    const response = await this.request(bodyFor(request, this.config, false), request.signal);
     return normalized(await response.json());
   }
 
   async *stream(request) {
-    const response = await this.request(bodyFor(request, this.config, true));
+    const response = await this.request(bodyFor(request, this.config, true), request.signal);
     const message = { content: [], usage: {} };
     const tools = new Map();
     for await (const event of parseSse(response.body)) {
@@ -102,8 +102,8 @@ export class AnthropicProvider {
     yield { type: 'complete', response: normalized(message) };
   }
 
-  async request(body) {
-    const response = await this.fetch(`${this.config.baseUrl}/v1/messages`, {
+  request(body, signal) {
+    return providerFetch(this.fetch, `${this.config.baseUrl}/v1/messages`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -111,8 +111,6 @@ export class AnthropicProvider {
         'x-api-key': this.config.apiKey,
       },
       body: JSON.stringify(body),
-    });
-    return providerResponse(response, 'anthropic');
+    }, 'anthropic', { signal, timeoutMs: this.config.timeoutMs });
   }
 }
-
