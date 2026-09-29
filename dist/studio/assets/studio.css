@@ -244,6 +244,8 @@ input.file {
   justify-content: space-between;
 }
 .fixture-agent-actions small { color: var(--muted); font-size: 10px; }
+.binding-suggestion { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.binding-suggestion small { color: var(--muted); overflow-wrap: anywhere; }
 
 .emitters { display: grid; gap: 6px; }
 .emitter { display: grid; grid-template-columns: auto 1fr 1fr auto; gap: 6px; align-items: center; }

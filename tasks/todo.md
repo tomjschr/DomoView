@@ -55,7 +55,7 @@
 ## Phase 5: Home Assistant round trip
 
 - [x] Task 16: Add optional HA connection
-- [ ] Task 17: Extend deterministic entity matching
+- [x] Task 17: Extend deterministic entity matching
 - [ ] Task 18: Add reviewed pack installation
 
 ### Checkpoint E

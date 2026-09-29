@@ -66,6 +66,14 @@ export class LocalProjectClient {
     return apiJson(`${this.base}/api/v1/providers`);
   }
 
+  capabilities() {
+    return apiJson(`${this.base}/api/v1/capabilities`);
+  }
+
+  homeAssistantCatalog() {
+    return apiJson(`${this.base}/api/v1/ha/catalog`);
+  }
+
   list() {
     return apiJson(`${this.base}/api/v1/projects`).then(result => result.projects);
   }
