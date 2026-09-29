@@ -52,6 +52,20 @@ export function usage(input = {}) {
   };
 }
 
+export function estimateCost(tokenUsage, pricing) {
+  if (!pricing || pricing.inputPerMillion == null || pricing.outputPerMillion == null) {
+    return null;
+  }
+  const tokens = usage(tokenUsage);
+  const total = (
+    tokens.inputTokens * pricing.inputPerMillion +
+    tokens.outputTokens * pricing.outputPerMillion +
+    tokens.cacheReadTokens * (pricing.cacheReadPerMillion ?? pricing.inputPerMillion) +
+    tokens.cacheWriteTokens * (pricing.cacheWritePerMillion ?? pricing.inputPerMillion)
+  ) / 1_000_000;
+  return Math.round(total * 1_000_000) / 1_000_000;
+}
+
 export async function providerResponse(response, provider) {
   if (response.ok) return response;
   let detail = '';

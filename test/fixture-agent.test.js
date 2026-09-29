@@ -39,6 +39,13 @@ const project = {
 
 function provider(response) {
   return {
+    config: {
+      pricing: {
+        inputPerMillion: 4,
+        outputPerMillion: 20,
+        cacheReadPerMillion: 0.4,
+      },
+    },
     async *stream(request) {
       yield { type: 'text_delta', text: 'I will adjust it.' };
       yield { type: 'tool_start', name: response.toolCalls[0].name };
@@ -78,6 +85,7 @@ describe('fixture edit agent', () => {
       id: 'ceiling',
       changes: { color: '#ffdca8', shadow: true },
     }]);
+    assert.equal(result.costUsd, 0.0008);
     assert.deepEqual(events.map(event => event.type), ['text_delta', 'status']);
   });
 
@@ -95,4 +103,3 @@ describe('fixture edit agent', () => {
     }), error => error instanceof FixtureAgentError && error.code === 'invalid_tool_call');
   });
 });
-

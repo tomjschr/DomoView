@@ -1,4 +1,4 @@
-import { ProviderError } from './provider.js';
+import { estimateCost, ProviderError } from './provider.js';
 
 const UPDATE_KEYS = new Set([
   'name', 'room', 'emitters', 'lumens', 'color', 'range', 'shadow', 'bulb', 'variant',
@@ -151,6 +151,7 @@ export async function runFixtureAgent(input) {
     assistantText: finalResponse.text,
     operations: operationsFor(finalResponse.toolCalls, input.fixtureId),
     usage: finalResponse.usage,
+    costUsd: estimateCost(finalResponse.usage, input.provider.config?.pricing),
     provider: finalResponse.provider,
     model: finalResponse.model,
   };

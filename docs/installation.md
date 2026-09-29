@@ -146,6 +146,29 @@ and fixture resumes its conversation. Only a bounded recent message window and
 the summary associated with the currently accepted project revision are sent
 back to the provider.
 
+Optional per-model cost rates can be set in
+`.domoview-workspace/config/ai.json` under each provider:
+
+```json
+{
+  "providers": {
+    "anthropic": {
+      "model": "your-model-id",
+      "pricing": {
+        "inputPerMillion": 0,
+        "outputPerMillion": 0,
+        "cacheReadPerMillion": 0,
+        "cacheWritePerMillion": 0
+      }
+    }
+  }
+}
+```
+
+Use the current prices for the configured model. Studio then shows the
+estimated USD cost beside token and cache usage for every completed turn; if
+rates are absent it explicitly displays `cost n/a`.
+
 **From your own Home Assistant.** A DomoView install contains its own copy:
 
 ```

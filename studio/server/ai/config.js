@@ -10,6 +10,11 @@ function text(value) {
   return result || null;
 }
 
+function price(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
 function providerConfig(id, file = {}, env = process.env) {
   const prefix = id.toUpperCase();
   const standardKeyName = id === 'anthropic'
@@ -34,6 +39,12 @@ function providerConfig(id, file = {}, env = process.env) {
     apiKey,
     baseUrl,
     model,
+    pricing: {
+      inputPerMillion: price(file.pricing?.inputPerMillion),
+      outputPerMillion: price(file.pricing?.outputPerMillion),
+      cacheReadPerMillion: price(file.pricing?.cacheReadPerMillion),
+      cacheWritePerMillion: price(file.pricing?.cacheWritePerMillion),
+    },
     configured: id === 'opencode' ? !!baseUrl : !!apiKey,
     source: environmentApiKey || environmentBaseUrl || environmentModel ? 'environment' : 'file',
   };

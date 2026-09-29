@@ -75,5 +75,25 @@ describe('project proposals', () => {
       error => error instanceof ProposalError && error.code === 'revision_conflict',
     );
   });
-});
 
+  test('undoes an applied proposal only while its revision is current', async () => {
+    const original = await projects.get('home');
+    const proposal = await proposals.create('home', original.revision, [{
+      type: 'fixture.update',
+      id: 'light_1',
+      changes: { shadow: true },
+    }]);
+    const applied = await proposals.apply(proposal.id);
+    const undone = await proposals.undo(proposal.id);
+    assert.equal(undone.proposal.status, 'undone');
+    assert.equal(undone.project.revision, applied.project.revision + 1);
+    assert.equal(
+      undone.project.project.fixtures.find(fixture => fixture.id === 'light_1').shadow,
+      original.project.fixtures.find(fixture => fixture.id === 'light_1').shadow,
+    );
+    await assert.rejects(
+      proposals.undo(proposal.id),
+      error => error instanceof ProposalError && error.code === 'proposal_not_applied',
+    );
+  });
+});

@@ -401,12 +401,20 @@ class Studio {
       : !this.aiConfigured
         ? 'Configure the executor AI provider on the local server.'
         : 'Changes become a visual proposal and are never applied automatically.';
+    const latestProposal = this.fixtureSessions.get(selected.id)?.latestProposal;
     return el('div', { class: 'fixture-agent' }, [
       el('strong', {}, `AI: ${selected.name}`),
       messages,
+      this.fixtureAgentProgress
+        ? el('small', { class: 'fixture-agent-progress' }, this.fixtureAgentProgress)
+        : null,
       input,
       el('div', { class: 'fixture-agent-actions' }, [
         el('small', {}, requirement),
+        latestProposal?.status === 'applied'
+          ? button('Undo last AI change', () =>
+            this.undoFixtureProposal(selected.id, latestProposal.id), { class: 'ghost' })
+          : null,
         send,
       ]),
     ]);
@@ -421,6 +429,7 @@ class Studio {
     const assistant = { role: 'assistant', content: '' };
     chat.push(assistant);
     this.fixtureAgentPending = true;
+    this.fixtureAgentProgress = 'Thinking…';
     this.renderSide();
     try {
       const result = await this.localProjects.fixtureEdit(
@@ -435,6 +444,12 @@ class Studio {
             const messages = this.stepPanelHost.querySelectorAll('.fixture-chat-message');
             const current = messages[messages.length - 1]?.querySelector('span');
             if (current) current.textContent = assistant.content;
+          } else if (event === 'status') {
+            this.fixtureAgentProgress = data.stage === 'building_proposal'
+              ? `Building proposal with ${data.tool || 'typed tools'}…`
+              : 'Thinking…';
+            const progress = this.stepPanelHost.querySelector('.fixture-agent-progress');
+            if (progress) progress.textContent = this.fixtureAgentProgress;
           }
         },
       );
@@ -446,11 +461,14 @@ class Studio {
         result.model,
         `${(usage.inputTokens || 0) + (usage.outputTokens || 0)} tokens`,
         usage.cacheReadTokens ? `${usage.cacheReadTokens} cached` : null,
+        result.costUsd == null ? 'cost n/a' : `$${result.costUsd.toFixed(6)}`,
       ].filter(Boolean).join(' · ');
       this.fixtureAgentPending = false;
+      this.fixtureAgentProgress = null;
       await this.startProposalReview(result.proposal);
     } catch (error) {
       this.fixtureAgentPending = false;
+      this.fixtureAgentProgress = null;
       assistant.content ||= `Could not create proposal: ${error.message}`;
       assistant.meta = error.retryable ? 'Temporary provider error' : 'Request failed';
       this.renderSide();
@@ -675,11 +693,16 @@ class Studio {
         [...this.proposalSelection],
       );
       const project = Project.fromJSON(JSON.stringify(result.project.project));
+      const fixtureIds = this.activeProposal.operations
+        .filter(operation => operation.type.startsWith('fixture.'))
+        .map(operation => operation.id)
+        .filter(Boolean);
       this.finishProposalReview();
       this.setWorkspaceRecord({
         id: result.project.id,
         revision: result.project.revision,
       });
+      fixtureIds.forEach(id => this.fixtureSessions.delete(id));
       await this.replaceProject(project);
       toast(`Applied proposal as revision ${result.project.revision}.`, 'ok');
     } catch (error) {
@@ -694,7 +717,12 @@ class Studio {
         this.activeProposal.id,
       );
       const original = this.proposalBaseProject;
+      const fixtureIds = this.activeProposal.operations
+        .filter(operation => operation.type.startsWith('fixture.'))
+        .map(operation => operation.id)
+        .filter(Boolean);
       this.finishProposalReview();
+      fixtureIds.forEach(id => this.fixtureSessions.delete(id));
       await this.replaceProject(original);
       toast('Proposal rejected. The project was not changed.', 'info');
     } catch (error) {
@@ -710,6 +738,24 @@ class Studio {
     this.proposalSelection = null;
     this.suspendPersist = false;
     this.root.classList.remove('reviewing');
+  }
+
+  async undoFixtureProposal(fixtureId, proposalId) {
+    try {
+      const result = await this.localProjects.undoProposal(
+        this.workspaceRecord.id,
+        proposalId,
+      );
+      this.setWorkspaceRecord({
+        id: result.project.id,
+        revision: result.project.revision,
+      });
+      this.fixtureSessions.delete(fixtureId);
+      await this.replaceProject(Project.fromJSON(JSON.stringify(result.project.project)));
+      toast(`Undid AI proposal at revision ${result.project.revision}.`, 'ok');
+    } catch (error) {
+      toast(`Could not undo AI proposal: ${error.message}`, 'error');
+    }
   }
 
   // -- export ---------------------------------------------------------------
