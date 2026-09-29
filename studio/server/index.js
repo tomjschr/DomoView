@@ -11,6 +11,7 @@ import { projectApi } from './api/projects.js';
 import { providerApi } from './api/providers.js';
 import { fixtureAgentApi } from './api/fixture-agent.js';
 import { loadAIConfig } from './ai/config.js';
+import { SessionStore } from './ai/sessions.js';
 import { ProposalStore } from './projects/proposals.js';
 import { ProjectStore } from './projects/store.js';
 
@@ -95,6 +96,7 @@ export async function createLocalStudioServer(options = {}) {
   });
   const projects = await new ProjectStore(workspace).init();
   const proposals = await new ProposalStore(workspace, projects).init();
+  const sessions = await new SessionStore(workspace).init();
 
   const server = createServer(async (request, response) => {
     try {
@@ -134,6 +136,7 @@ export async function createLocalStudioServer(options = {}) {
         aiConfig,
         projects,
         proposals,
+        sessions,
         providerFactory: options.providerFactory,
       })) return;
         const providerResult = providerApi(request, url, aiConfig);
@@ -141,7 +144,7 @@ export async function createLocalStudioServer(options = {}) {
           json(response, providerResult.status, providerResult.body, providerResult.headers);
           return;
         }
-        const projectResult = await projectApi(request, url, projects, proposals);
+        const projectResult = await projectApi(request, url, projects, proposals, sessions);
       if (projectResult) {
         if (projectResult.binary) {
           response.writeHead(projectResult.status, {
@@ -183,7 +186,11 @@ export async function createLocalStudioServer(options = {}) {
     },
     close() {
       return new Promise((resolve, reject) =>
-        server.close(error => error ? reject(error) : resolve()));
+        server.close(error => {
+          sessions.close();
+          if (error) reject(error);
+          else resolve();
+        }));
     },
   };
 }
