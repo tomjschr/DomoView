@@ -31,6 +31,14 @@ export function validateProviderRequest(request) {
       throw new ProviderError('internal', 'invalid_request', 'Tools require name and inputSchema.');
     }
   }
+  for (const attachment of request.attachments || []) {
+    if (!/^image\/(png|jpeg|webp)$/.test(attachment?.mediaType) ||
+        typeof attachment.data !== 'string' || !attachment.data) {
+      throw new ProviderError(
+        'internal', 'invalid_request', 'Vision attachments require image mediaType and base64 data.',
+      );
+    }
+  }
   return request;
 }
 

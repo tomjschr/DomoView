@@ -12,11 +12,25 @@ function bodyFor(request, config, stream) {
       cache_control: { type: 'ephemeral' },
     }]
     : request.system || undefined;
+  const messages = request.messages.map((message, index) => {
+    if (message.role !== 'user' || index !== request.messages.length - 1 ||
+        !request.attachments?.length) return message;
+    return {
+      role: 'user',
+      content: [
+        { type: 'text', text: message.content },
+        ...request.attachments.map(image => ({
+          type: 'image',
+          source: { type: 'base64', media_type: image.mediaType, data: image.data },
+        })),
+      ],
+    };
+  });
   return {
     model: request.model || config.model,
     max_tokens: request.maxTokens || 2048,
     system,
-    messages: request.messages,
+    messages,
     tools: request.tools?.map(tool => ({
       name: tool.name,
       description: tool.description || '',

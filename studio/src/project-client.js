@@ -74,6 +74,21 @@ export class LocalProjectClient {
     return apiJson(`${this.base}/api/v1/ha/catalog`);
   }
 
+  visionSuggestions(id, imageIds, instruction) {
+    return apiJson(
+      `${this.base}/api/v1/projects/${encodeURIComponent(id)}/vision-suggestions`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          imageIds,
+          instruction,
+          confirmTransmission: true,
+        }),
+      },
+    );
+  }
+
   list() {
     return apiJson(`${this.base}/api/v1/projects`).then(result => result.projects);
   }

@@ -52,6 +52,7 @@ class Studio {
     this.fixtureSessions = new Map();
     this.fixtureSessionLoads = new Set();
     this.aiConfigured = false;
+    this.visionConfigured = false;
     this.haAvailable = false;
     this.bindingSuggestions = new Map();
     this.step = 'plan';
@@ -60,6 +61,39 @@ class Studio {
     this.setStep('plan');
     this.loadBackdrop();
     void this.initLocalServer();
+  }
+
+  async requestVisionSuggestions() {
+    const imageIds = [
+      this.project.data.plan.image ? 'plan' : null,
+      ...this.project.data.photos
+        .filter(photo => photo.include)
+        .map(photo => `photo:${photo.id}`),
+    ].filter(Boolean);
+    if (!imageIds.length) {
+      toast('Select at least one included photo or add a floor plan.', 'warn');
+      return;
+    }
+    const names = [
+      this.project.data.plan.image ? 'Floor plan' : null,
+      ...this.project.data.photos.filter(photo => photo.include).map(photo => photo.name),
+    ].filter(Boolean);
+    if (!confirm(
+      `Send these images to the configured vision provider?\n\n${names.join('\n')}\n\n` +
+      'No image is sent unless you confirm this dialog.',
+    )) return;
+    try {
+      const result = await this.localProjects.visionSuggestions(
+        this.workspaceRecord.id,
+        imageIds,
+        'Suggest room labels, walls, openings and fixtures. Mark uncertain geometry.',
+      );
+      this.visionAnnotations = result.annotations;
+      this.renderSide();
+      toast(`Received ${result.annotations.length} review-only vision suggestions.`, 'info');
+    } catch (error) {
+      toast(`Vision suggestions failed: ${error.message}`, 'error');
+    }
   }
 
   async findHomeAssistantBindings() {
@@ -251,7 +285,19 @@ class Studio {
       case 'photos':
         this.photos.container = el('div', { class: 'photo-shelf' });
         this.photos.render();
-        return group('Photos', [this.photos.container]);
+        return group('Photos', [
+          this.photos.container,
+          this.workspaceRecord && this.visionConfigured
+            ? button('Suggest from selected images…', () => this.requestVisionSuggestions(), {
+              class: 'ghost',
+            })
+            : null,
+          ...(this.visionAnnotations || []).map(annotation =>
+            el('p', { class: 'note' },
+              `${annotation.type}: ${annotation.label || 'unlabelled'} · ` +
+              `${Math.round(annotation.confidence * 100)}%` +
+              `${annotation.uncertain ? ' · uncertain' : ''}`)),
+        ]);
       case 'preview':
         return group('Preview', [this.preview.controls]);
       case 'export':
@@ -381,6 +427,8 @@ class Studio {
       const configured = status.providers.filter(provider => provider.configured);
       const executor = status.roles.executor;
       this.aiConfigured = !!configured.find(provider => provider.id === executor?.provider);
+      const vision = status.roles.vision;
+      this.visionConfigured = !!configured.find(provider => provider.id === vision?.provider);
       this.aiStatusNode.hidden = false;
       this.aiStatusNode.textContent = configured.length
         ? `AI: ${configured.map(provider => provider.id).join(', ')}`

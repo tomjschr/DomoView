@@ -12,6 +12,7 @@ import { providerApi } from './api/providers.js';
 import { fixtureAgentApi } from './api/fixture-agent.js';
 import { homeAssistantApi } from './api/ha.js';
 import { installApi } from './api/install.js';
+import { visionApi } from './api/vision.js';
 import { HomeAssistantClient } from './ha/client.js';
 import { HomeAssistantInstaller } from './ha/install.js';
 import { loadAIConfig } from './ai/config.js';
@@ -48,7 +49,8 @@ function json(response, status, body, headers = {}) {
   response.end(body == null ? '' : JSON.stringify(body));
 }
 
-function allowedHost(host) {
+function allowedHost(host, ingress = false) {
+  if (ingress) return true;
   const raw = String(host || '');
   const name = raw.startsWith('[')
     ? raw.slice(1, raw.indexOf(']'))
@@ -87,8 +89,10 @@ async function serveStatic(request, response, pathname, studioRoot) {
 }
 
 export async function createLocalStudioServer(options = {}) {
-  const host = options.host || '127.0.0.1';
-  const port = Number(options.port ?? 8099);
+  const environment = options.env || process.env;
+  const host = options.host || environment.DOMOVIEW_HOST || '127.0.0.1';
+  const port = Number(options.port ?? environment.DOMOVIEW_PORT ?? 8099);
+  const ingress = options.ingress ?? environment.DOMOVIEW_INGRESS === 'true';
   const studioRoot = path.resolve(options.studioRoot || STUDIO_ROOT);
   const workspace = path.resolve(options.workspace ||
     process.env.DOMOVIEW_WORKSPACE ||
@@ -96,22 +100,22 @@ export async function createLocalStudioServer(options = {}) {
   await mkdir(workspace, { recursive: true });
   const aiConfig = options.aiConfig || await loadAIConfig({
     workspace,
-    env: options.env || process.env,
+    env: environment,
   });
   const projects = await new ProjectStore(workspace).init();
   const proposals = await new ProposalStore(workspace, projects).init();
   const sessions = await new SessionStore(workspace).init();
   const homeAssistant = options.homeAssistant || new HomeAssistantClient({
-    url: options.env?.DOMOVIEW_HA_URL || process.env.DOMOVIEW_HA_URL,
-    token: options.env?.DOMOVIEW_HA_TOKEN || process.env.DOMOVIEW_HA_TOKEN,
+    url: environment.DOMOVIEW_HA_URL,
+    token: environment.DOMOVIEW_HA_TOKEN,
   });
   const installer = options.installer || new HomeAssistantInstaller(
-    options.env?.DOMOVIEW_HA_CONFIG || process.env.DOMOVIEW_HA_CONFIG,
+    environment.DOMOVIEW_HA_CONFIG,
   );
 
   const server = createServer(async (request, response) => {
     try {
-      if (!allowedHost(request.headers.host)) {
+      if (!allowedHost(request.headers.host, ingress)) {
         json(response, 403, { error: 'host_not_allowed' });
         return;
       }
@@ -150,6 +154,15 @@ export async function createLocalStudioServer(options = {}) {
         sessions,
         providerFactory: options.providerFactory,
       })) return;
+        const visionResult = await visionApi(request, url, {
+          aiConfig,
+          projects,
+          providerFactory: options.providerFactory,
+        });
+        if (visionResult) {
+          json(response, visionResult.status, visionResult.body, visionResult.headers);
+          return;
+        }
         const installResult = await installApi(request, url, installer);
         if (installResult) {
           json(response, installResult.status, installResult.body, installResult.headers);

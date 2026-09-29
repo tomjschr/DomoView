@@ -1,0 +1,32 @@
+name: DomoView Studio
+version: 0.1.1
+slug: domoview_studio
+description: Local DomoView Home Pack editor with reviewed AI assistance
+url: https://github.com/tomjschr/DomoView
+startup: application
+boot: auto
+init: false
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:floor-plan
+homeassistant_api: true
+hassio_api: true
+map:
+  - config:rw
+arch:
+  - amd64
+  - aarch64
+  - armv7
+options:
+  anthropic_api_key: ""
+  openai_api_key: ""
+  orchestrator_provider: anthropic
+  executor_provider: anthropic
+  vision_provider: openai
+schema:
+  anthropic_api_key: password?
+  openai_api_key: password?
+  orchestrator_provider: list(anthropic|openai|opencode)
+  executor_provider: list(anthropic|openai|opencode)
+  vision_provider: list(anthropic|openai|opencode)
+
