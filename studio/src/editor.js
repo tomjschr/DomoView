@@ -254,9 +254,18 @@ export class Editor {
       const snapshot = this.dragging.before;
       const after = structuredClone(this.data);
       this.project.data = snapshot;
-      this.project.commit(`move ${this.dragging.target.collection}`, data => {
-        Object.assign(data, after);
-      });
+      if (this.dragging.target.collection === 'fixtures') {
+        const fixture = after.fixtures.find(entry => entry.id === this.dragging.target.id);
+        this.project.applyOperation({
+          type: 'fixture.update',
+          id: fixture.id,
+          changes: { emitters: fixture.emitters },
+        }, 'move fixtures');
+      } else {
+        this.project.commit(`move ${this.dragging.target.collection}`, data => {
+          Object.assign(data, after);
+        });
+      }
     }
     this.dragging = null;
     if (this.tool === 'furniture' && this.draft?.kind === 'rect' && this.draft.points.length === 1) {
@@ -441,28 +450,26 @@ export class Editor {
     const point = this.snap?.point || raw;
     if (event.shiftKey && this.selected?.collection === 'fixtures') {
       const id = this.selected.id;
-      this.project.commit('add bulb', data => {
-        const fixture = data.fixtures.find(entry => entry.id === id);
-        if (fixture) {
-          fixture.emitters.push({
-            point, height: fixture.emitters.at(-1)?.height ?? data.level.height - 0.15,
-            type: fixture.emitters.at(-1)?.type ?? 'point', intensity: 1,
-          });
-        }
+      const fixture = structuredClone(this.project.find('fixtures', id));
+      if (!fixture) return;
+      fixture.emitters.push({
+        point, height: fixture.emitters.at(-1)?.height ?? this.data.level.height - 0.15,
+        type: fixture.emitters.at(-1)?.type ?? 'point', intensity: 1,
       });
+      this.project.applyOperation({
+        type: 'fixture.update',
+        id,
+        changes: { emitters: fixture.emitters },
+      }, 'add bulb');
       this.onRedraw();
       return;
     }
-    const fixture = this.project.addFixture(point);
     const room = this.data.rooms.find(entry =>
       entry.polygon.length >= 3 && insidePolygon(point[0], point[1], entry.polygon));
-    if (room) {
-      this.project.touch(data => {
-        const created = data.fixtures.find(entry => entry.id === fixture.id);
-        created.room = room.id;
-        created.name = `${room.name} light ${data.fixtures.filter(f => f.room === room.id).length}`;
-      });
-    }
+    const fixture = this.project.addFixture(point, 'light', room ? {
+      room: room.id,
+      name: `${room.name} light ${this.data.fixtures.filter(f => f.room === room.id).length + 1}`,
+    } : {});
     this.select('fixtures', fixture.id);
   }
 }

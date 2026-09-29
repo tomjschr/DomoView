@@ -5,6 +5,8 @@
  * exporter converts it to metres, which is what a Home Pack stores.
  */
 
+import { applyProjectOperation } from './operations/index.js';
+
 export const PROJECT_VERSION = 1;
 
 let counter = 0;
@@ -98,6 +100,16 @@ export class Project {
     this.notify(label);
   }
 
+  applyOperation(operation, label) {
+    const result = applyProjectOperation(this.data, operation);
+    this.undoStack.push({ label: label || result.summary, data: structuredClone(this.data) });
+    if (this.undoStack.length > 80) this.undoStack.shift();
+    this.redoStack.length = 0;
+    this.data = result.project;
+    this.notify(label || result.summary);
+    return result;
+  }
+
   /** For live drags: change without pushing a new undo entry every frame. */
   touch(mutator, reason = 'drag') {
     mutator(this.data);
@@ -172,7 +184,7 @@ export class Project {
     return opening;
   }
 
-  addFixture(point, kind = 'light') {
+  addFixture(point, kind = 'light', initial = {}) {
     const fixture = {
       id: nextId(kind),
       name: '',
@@ -185,8 +197,9 @@ export class Project {
       shadow: false,
       bulb: 'glow',
       variant: null,
+      ...initial,
     };
-    this.commit('add fixture', data => data.fixtures.push(fixture));
+    this.applyOperation({ type: 'fixture.add', value: fixture }, 'add fixture');
     return fixture;
   }
 
@@ -205,6 +218,10 @@ export class Project {
   }
 
   remove(collection, id) {
+    if (collection === 'fixtures') {
+      this.applyOperation({ type: 'fixture.remove', id }, 'remove fixtures');
+      return;
+    }
     this.commit(`remove ${collection}`, data => {
       data[collection] = data[collection].filter(entry => entry.id !== id);
       if (collection === 'walls') {

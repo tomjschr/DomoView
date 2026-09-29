@@ -1,7 +1,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { emptyProject } from '../studio/src/project.js';
+import { emptyProject, Project } from '../studio/src/project.js';
 import {
   applyProjectOperation, applyProjectOperations, OperationError,
 } from '../studio/src/operations/index.js';
@@ -121,5 +121,19 @@ describe('project operations', () => {
     assert.ok(validateOperation({
       type: 'fixture.move', id: 'light_1', delta: ['far', 0],
     }).length > 0);
+  });
+
+  test('Project applies operations through its normal undo and redo history', () => {
+    const project = new Project(projectWithElements());
+    project.applyOperation({
+      type: 'fixture.update',
+      id: 'light_1',
+      changes: { color: '#112233' },
+    }, 'change fixture color');
+    assert.equal(project.data.fixtures[0].color, '#112233');
+    assert.equal(project.undo(), true);
+    assert.equal(project.data.fixtures[0].color, '#ffdda4');
+    assert.equal(project.redo(), true);
+    assert.equal(project.data.fixtures[0].color, '#112233');
   });
 });
