@@ -35,9 +35,9 @@
 
 ### Checkpoint C
 
-- [ ] Chat streams responses and tool progress
-- [ ] Fixture proposal can be accepted, rejected, undone and refined
-- [ ] Usage and cost are visible per turn
+- [x] Chat streams responses and tool progress
+- [x] Fixture proposal can be accepted, rejected, undone and refined
+- [x] Usage and cost are visible per turn
 
 ## Phase 4: Efficient orchestration
 

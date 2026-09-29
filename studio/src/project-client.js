@@ -116,6 +116,13 @@ export class LocalProjectClient {
     );
   }
 
+  undoProposal(projectId, proposalId) {
+    return apiJson(
+      `${this.base}/api/v1/projects/${encodeURIComponent(projectId)}/proposals/${encodeURIComponent(proposalId)}/undo`,
+      { method: 'POST' },
+    );
+  }
+
   fixtureSession(id, fixtureId) {
     return apiJson(
       `${this.base}/api/v1/projects/${encodeURIComponent(id)}/agents/fixture-edit` +

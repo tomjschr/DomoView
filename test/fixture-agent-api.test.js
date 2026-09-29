@@ -130,5 +130,22 @@ describe('fixture agent API', () => {
     ).then(item => item.json());
     assert.equal(accepted.session.contextRevision, applied.project.revision);
     assert.match(accepted.session.summary, /Fixture "fx_1": update/);
+    assert.equal(accepted.session.latestProposal.status, 'applied');
+
+    const undone = await fetch(
+      `${baseUrl}/api/v1/projects/agent-project/proposals/${result.proposal.id}/undo`,
+      { method: 'POST' },
+    ).then(item => item.json());
+    assert.equal(undone.proposal.status, 'undone');
+    assert.equal(
+      undone.project.project.fixtures.find(fixture => fixture.id === 'fx_1').shadow,
+      project.fixtures.find(fixture => fixture.id === 'fx_1').shadow,
+    );
+    const afterUndo = await fetch(
+      `${baseUrl}/api/v1/projects/agent-project/agents/fixture-edit?fixtureId=fx_1`,
+    ).then(item => item.json());
+    assert.equal(afterUndo.session.latestProposal.status, 'undone');
+    assert.equal(afterUndo.session.contextRevision, undone.project.revision);
+    assert.equal(afterUndo.session.summary, '');
   });
 });

@@ -38,7 +38,7 @@ function errorStatus(code) {
 export async function projectApi(request, url, store, proposals, sessions) {
   const proposalCollection = /^\/api\/v1\/projects\/([^/]+)\/proposals$/.exec(url.pathname);
   const proposalAction =
-    /^\/api\/v1\/projects\/([^/]+)\/proposals\/([^/]+)\/(apply|reject)$/.exec(url.pathname);
+    /^\/api\/v1\/projects\/([^/]+)\/proposals\/([^/]+)\/(apply|reject|undo)$/.exec(url.pathname);
   const proposalItem = /^\/api\/v1\/projects\/([^/]+)\/proposals\/([^/]+)$/.exec(url.pathname);
   const assetMatch = /^\/api\/v1\/projects\/([^/]+)\/assets\/([a-f0-9]{64}\.(?:jpg|png|webp))$/
     .exec(url.pathname);
@@ -81,6 +81,15 @@ export async function projectApi(request, url, store, proposals, sessions) {
         const proposal = await proposals.reject(proposalId);
         sessions?.markProposal(proposalId, 'rejected');
         return { status: 200, body: proposal };
+      }
+      if (proposalAction[3] === 'undo') {
+        const result = await proposals.undo(proposalId);
+        sessions?.markProposal(
+          proposalId,
+          'undone',
+          result.project.revision,
+        );
+        return { status: 200, body: result };
       }
       const input = await readJson(request);
       const result = await proposals.apply(proposalId, input.indexes);

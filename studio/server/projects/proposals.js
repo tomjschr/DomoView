@@ -76,6 +76,7 @@ export class ProposalStore {
       status: 'pending',
       createdAt: new Date().toISOString(),
       operations,
+      baseProject: current.project,
       summaries: result.summaries,
       affected: result.affected,
       draft: result.project,
@@ -144,6 +145,36 @@ export class ProposalStore {
     return this.present(record);
   }
 
+  async undo(id) {
+    const record = await this.get(id);
+    if (record.status !== 'applied') {
+      throw new ProposalError('proposal_not_applied', 'Only an applied proposal can be undone.');
+    }
+    if (!record.baseProject) {
+      throw new ProposalError('proposal_not_reversible', 'Proposal has no stored base snapshot.');
+    }
+    const current = await this.projects.get(record.projectId);
+    if (current.revision !== record.appliedRevision) {
+      throw new ProposalError(
+        'revision_conflict',
+        `Project is at revision ${current.revision}; proposal was applied at ${record.appliedRevision}.`,
+      );
+    }
+    const updated = await this.projects.update(
+      record.projectId,
+      current.revision,
+      record.baseProject,
+    );
+    record.status = 'undone';
+    record.undoneAt = new Date().toISOString();
+    record.undoneRevision = updated.revision;
+    await this.write(record);
+    return {
+      proposal: await this.present(record),
+      project: await this.projects.getHydrated(record.projectId),
+    };
+  }
+
   async present(record) {
     return {
       ...record,
@@ -161,4 +192,3 @@ export class ProposalStore {
     await rename(temporary, target);
   }
 }
-

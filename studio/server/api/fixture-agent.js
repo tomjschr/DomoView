@@ -138,6 +138,7 @@ export async function fixtureAgentApi(request, url, response, dependencies) {
       provider: result.provider,
       model: result.model,
       usage: result.usage,
+      costUsd: result.costUsd,
       proposal,
     });
   } catch (error) {

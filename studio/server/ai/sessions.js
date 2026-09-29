@@ -116,7 +116,13 @@ export class SessionStore {
       SELECT role, content, created_at AS createdAt
       FROM messages WHERE session_id = ? ORDER BY id
     `).all(id);
-    return { ...this.present(session), messages };
+    const latestProposal = this.database.prepare(`
+      SELECT proposal_id AS id, status, base_revision AS baseRevision,
+        applied_revision AS appliedRevision
+      FROM session_proposals WHERE session_id = ?
+      ORDER BY rowid DESC LIMIT 1
+    `).get(id) || null;
+    return { ...this.present(session), messages, latestProposal };
   }
 
   context(id, revision, limit = 8) {
@@ -157,7 +163,7 @@ export class SessionStore {
     `).run(
       result.provider || null,
       result.model || null,
-      JSON.stringify(result.usage || {}),
+      JSON.stringify({ ...(result.usage || {}), costUsd: result.costUsd }),
       new Date().toISOString(),
       id,
     );
@@ -197,6 +203,10 @@ export class SessionStore {
       this.database.prepare(`
         UPDATE sessions SET summary = ?, context_revision = ?, updated_at = ? WHERE id = ?
       `).run(next, appliedRevision, new Date().toISOString(), link.session_id);
+    } else if (status === 'undone') {
+      this.database.prepare(`
+        UPDATE sessions SET summary = '', context_revision = ?, updated_at = ? WHERE id = ?
+      `).run(appliedRevision, new Date().toISOString(), link.session_id);
     }
   }
 
@@ -216,4 +226,3 @@ export class SessionStore {
     };
   }
 }
-
