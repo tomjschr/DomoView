@@ -56,13 +56,13 @@
 
 - [x] Task 16: Add optional HA connection
 - [x] Task 17: Extend deterministic entity matching
-- [ ] Task 18: Add reviewed pack installation
+- [x] Task 18: Add reviewed pack installation
 
 ### Checkpoint E
 
-- [ ] Offline mode remains functional
-- [ ] HA metadata can be read without exposing the token
-- [ ] Pack and card configuration install through a dry-run review
+- [x] Offline mode remains functional
+- [x] HA metadata can be read without exposing the token
+- [x] Pack and card configuration install through a dry-run review
 
 ## Phase 6: Additional providers and packaging
 
