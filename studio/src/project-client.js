@@ -49,5 +49,30 @@ export class LocalProjectClient {
       body: JSON.stringify({ revision, project }),
     });
   }
-}
 
+  propose(id, revision, operations) {
+    return apiJson(`${this.base}/api/v1/projects/${encodeURIComponent(id)}/proposals`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ revision, operations }),
+    });
+  }
+
+  applyProposal(projectId, proposalId, indexes) {
+    return apiJson(
+      `${this.base}/api/v1/projects/${encodeURIComponent(projectId)}/proposals/${encodeURIComponent(proposalId)}/apply`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ indexes }),
+      },
+    );
+  }
+
+  rejectProposal(projectId, proposalId) {
+    return apiJson(
+      `${this.base}/api/v1/projects/${encodeURIComponent(projectId)}/proposals/${encodeURIComponent(proposalId)}/reject`,
+      { method: 'POST' },
+    );
+  }
+}

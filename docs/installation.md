@@ -111,6 +111,11 @@ npm run studio:local
 This builds the browser bundle, starts the local application on
 `http://127.0.0.1:8099/`, and creates a private `.domoview-workspace` beside the
 command's working directory. The server binds to the loopback interface only.
+Projects saved with **Save to workspace** use revision checks and store imported
+images as deduplicated local assets. **Review operations…** accepts a JSON array
+of typed DomoView operations, renders the draft in the normal plan/3D preview,
+and applies only the operations you explicitly select. This review path is also
+the safety boundary used by the upcoming AI providers.
 
 **From your own Home Assistant.** A DomoView install contains its own copy:
 
