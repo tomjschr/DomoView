@@ -67,6 +67,16 @@ export class SessionStore {
         base_revision INTEGER NOT NULL,
         applied_revision INTEGER
       );
+      CREATE TABLE IF NOT EXISTS routing_decisions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+        route TEXT NOT NULL,
+        specialist TEXT,
+        reason TEXT NOT NULL,
+        domains_json TEXT NOT NULL,
+        expected_model_calls INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      );
     `);
     return this;
   }
@@ -122,7 +132,14 @@ export class SessionStore {
       FROM session_proposals WHERE session_id = ?
       ORDER BY rowid DESC LIMIT 1
     `).get(id) || null;
-    return { ...this.present(session), messages, latestProposal };
+    const latestRouting = this.database.prepare(`
+      SELECT route, specialist, reason, domains_json AS domains,
+        expected_model_calls AS expectedModelCalls
+      FROM routing_decisions WHERE session_id = ?
+      ORDER BY id DESC LIMIT 1
+    `).get(id) || null;
+    if (latestRouting) latestRouting.domains = JSON.parse(latestRouting.domains);
+    return { ...this.present(session), messages, latestProposal, latestRouting };
   }
 
   context(id, revision, limit = 8) {
@@ -154,6 +171,22 @@ export class SessionStore {
       INSERT INTO calls (id, session_id, status, created_at) VALUES (?, ?, 'running', ?)
     `).run(id, sessionId, new Date().toISOString());
     return id;
+  }
+
+  recordRouting(sessionId, decision) {
+    this.database.prepare(`
+      INSERT INTO routing_decisions
+        (session_id, route, specialist, reason, domains_json, expected_model_calls, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      sessionId,
+      decision.route,
+      decision.specialist || null,
+      decision.reason,
+      JSON.stringify(decision.domains),
+      decision.expectedModelCalls,
+      new Date().toISOString(),
+    );
   }
 
   completeCall(id, result) {

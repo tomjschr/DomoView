@@ -462,6 +462,7 @@ class Studio {
         `${(usage.inputTokens || 0) + (usage.outputTokens || 0)} tokens`,
         usage.cacheReadTokens ? `${usage.cacheReadTokens} cached` : null,
         result.costUsd == null ? 'cost n/a' : `$${result.costUsd.toFixed(6)}`,
+        result.routing?.specialist ? `route: ${result.routing.specialist}` : null,
       ].filter(Boolean).join(' · ');
       this.fixtureAgentPending = false;
       this.fixtureAgentProgress = null;
