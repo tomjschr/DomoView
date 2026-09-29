@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/tomjschr/DomoView/main/schemas/ai-operation-1.schema.json",
+  "title": "DomoView Project Operation v1",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["type", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "wall.add", "opening.add", "fixture.add"
+          ]
+        },
+        "value": { "type": "object" }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["type", "id", "changes"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "wall.update", "opening.update", "fixture.update"
+          ]
+        },
+        "id": { "$ref": "#/definitions/id" },
+        "changes": { "type": "object", "minProperties": 1 }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["type", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "wall.remove", "opening.remove", "fixture.remove"
+          ]
+        },
+        "id": { "$ref": "#/definitions/id" }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["type", "id", "delta"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["wall.move", "fixture.move"] },
+        "id": { "$ref": "#/definitions/id" },
+        "delta": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "items": { "type": "number" }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*$"
+    }
+  }
+}
+
