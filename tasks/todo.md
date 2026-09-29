@@ -42,7 +42,7 @@
 ## Phase 4: Efficient orchestration
 
 - [x] Task 12: Add deterministic request routing
-- [ ] Task 13: Add structured task-graph orchestration
+- [x] Task 13: Add structured task-graph orchestration
 - [ ] Task 14: Add geometry and appearance specialists
 - [ ] Task 15: Enforce budgets and prompt caching
 
