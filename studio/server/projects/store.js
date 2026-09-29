@@ -3,6 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { AssetStore } from './assets.js';
+import { validateProject } from './validate.js';
 
 const ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,79}$/;
 
@@ -44,10 +45,21 @@ function parseRecord(text, id) {
         !record.project || typeof record.project !== 'object' || Array.isArray(record.project)) {
       throw new Error('invalid record');
     }
+
     return { id, revision: record.revision, project: record.project };
   } catch {
     throw new ProjectStoreError('corrupt_project', `Project "${id}" is not a valid stored project.`);
   }
+}
+
+function assertValidProject(project) {
+  const errors = validateProject(project);
+  if (!errors.length) return;
+  const first = errors[0];
+  throw new ProjectStoreError(
+    'invalid_project',
+    `Project ${first.path} ${first.message}.`,
+  );
 }
 
 export class ProjectStore {
@@ -110,6 +122,7 @@ export class ProjectStore {
     if (!project || typeof project !== 'object' || Array.isArray(project)) {
       throw new ProjectStoreError('invalid_project', 'Project must be a JSON object.');
     }
+    assertValidProject(project);
     const id = projectId(requestedId || project.meta?.id || project.meta?.name || 'project');
     const folder = path.join(this.root, id);
     await mkdir(folder, { recursive: false }).catch(error => {
@@ -130,6 +143,7 @@ export class ProjectStore {
     if (!project || typeof project !== 'object' || Array.isArray(project)) {
       throw new ProjectStoreError('invalid_project', 'Project must be a JSON object.');
     }
+    assertValidProject(project);
     const current = await this.get(id);
     if (current.revision !== revision) {
       throw new ProjectStoreError(

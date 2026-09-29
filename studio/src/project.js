@@ -225,18 +225,24 @@ export class Project {
 
   static fromJSON(text) {
     const parsed = JSON.parse(text);
-    if (parsed.version !== PROJECT_VERSION) {
-      throw new Error(`Project file version ${parsed.version} cannot be opened by this build (expected ${PROJECT_VERSION})`);
-    }
+    return new Project(migrateProjectData(parsed));
+  }
+}
+
+export function migrateProjectData(parsed) {
+  const version = parsed?.version ?? 1;
+  if (version !== PROJECT_VERSION) {
+    throw new Error(`Project file version ${version} cannot be opened by this build (expected ${PROJECT_VERSION})`);
+  }
     // Merge onto a fresh document so a project saved by an older build still
     // gains any field added since.
     const merged = { ...emptyProject(), ...parsed };
+    merged.version = PROJECT_VERSION;
     merged.meta = { ...emptyProject().meta, ...parsed.meta };
     merged.plan = { ...emptyProject().plan, ...parsed.plan };
     merged.materials = { ...emptyProject().materials, ...parsed.materials };
     merged.camera = { ...emptyProject().camera, ...parsed.camera };
-    return new Project(merged);
-  }
+    return merged;
 }
 
 /** Readiness of each authoring step, used to gate the export button. */
