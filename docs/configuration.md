@@ -62,6 +62,13 @@ Keys are **fixture ids from the pack** — read them from the visual editor or
 from `home.json`. A fixture with no entity stays deliberately dark rather than
 guessing; that is what lets you install a 40-lamp pack and bind five of them.
 
+The visual editor can propose local matches for unassigned fixtures. It compares
+fixture names and rooms with entity ids, friendly names and, when available,
+Home Assistant's entity, device and area registries. Only unambiguous
+high-confidence matches appear in the preview. Existing bindings are never
+overwritten, and the card configuration changes only after you explicitly
+apply the preview. No entity metadata leaves Home Assistant.
+
 What DomoView reads from a light entity:
 
 - `state` — `on` drives the light
