@@ -34,18 +34,20 @@ function providerConfig(id, file = {}, env = process.env) {
       : id === 'openai' ? 'https://api.openai.com'
       : null);
   const model = environmentModel || text(file.model);
+  const command = text(env.DOMOVIEW_OPENCODE_COMMAND) || text(file.command);
   return {
     id,
     apiKey,
     baseUrl,
     model,
+    command: id === 'opencode' ? command : null,
     pricing: {
       inputPerMillion: price(file.pricing?.inputPerMillion),
       outputPerMillion: price(file.pricing?.outputPerMillion),
       cacheReadPerMillion: price(file.pricing?.cacheReadPerMillion),
       cacheWritePerMillion: price(file.pricing?.cacheWritePerMillion),
     },
-    configured: id === 'opencode' ? !!baseUrl : !!apiKey,
+    configured: id === 'opencode' ? !!command : !!apiKey,
     source: environmentApiKey || environmentBaseUrl || environmentModel ? 'environment' : 'file',
   };
 }

@@ -66,7 +66,7 @@
 
 ## Phase 6: Additional providers and packaging
 
-- [ ] Task 19: Complete OpenCode compatibility spike
+- [x] Task 19: Complete OpenCode compatibility spike
 - [ ] Task 20: Package the server as a Home Assistant app
 - [ ] Task 21: Add bounded vision suggestions
 

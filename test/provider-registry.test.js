@@ -40,10 +40,8 @@ describe('provider registry', () => {
       () => createProvider({ id: 'anthropic', configured: false }),
       error => error instanceof ProviderError && error.code === 'not_configured',
     );
-    assert.throws(
-      () => createProvider({ id: 'opencode', configured: true }),
-      error => error instanceof ProviderError && error.code === 'unsupported_provider',
-    );
+    assert.equal(createProvider({
+      id: 'opencode', configured: true, command: 'opencode',
+    }).capabilities().tools, false);
   });
 });
-
