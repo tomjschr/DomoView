@@ -1,4 +1,5 @@
 import { OrchestrationError, validateTaskGraph } from './graph.js';
+import { cachedRequest } from '../context-cache.js';
 
 const TASK_GRAPH_TOOL = {
   name: 'submit_task_graph',
@@ -14,7 +15,11 @@ const TASK_GRAPH_TOOL = {
 };
 
 export async function planTaskGraph(input) {
-  const response = await input.provider.complete({
+  input.budget?.beforeCall();
+  const response = await input.provider.complete(cachedRequest('orchestrator', {
+    selection: input.selection || null,
+    projectSummary: input.projectSummary || {},
+  }, {
     system: [
       'Decompose only multi-domain DomoView edits into bounded specialist tasks.',
       'Use submit_task_graph exactly once. Every task declares dependencies, reads and writes.',
@@ -26,7 +31,8 @@ export async function planTaskGraph(input) {
     tools: [TASK_GRAPH_TOOL],
     maxTokens: 1600,
     signal: input.signal,
-  });
+  }));
+  input.budget?.record(response.usage, input.provider.config?.pricing);
   const calls = response.toolCalls.filter(call => call.name === 'submit_task_graph');
   if (calls.length !== 1) {
     throw new OrchestrationError(
@@ -41,4 +47,3 @@ export async function planTaskGraph(input) {
     model: response.model,
   };
 }
-

@@ -1,4 +1,5 @@
 import { OrchestrationError } from '../orchestration/graph.js';
+import { cachedRequest } from '../context-cache.js';
 
 function contextSlice(project, agent, task) {
   if (agent === 'geometry') {
@@ -45,18 +46,21 @@ function tool(agent) {
 export function createSpecialistAgent(agent, provider) {
   if (!ALLOWED[agent]) throw new Error(`Unknown specialist "${agent}".`);
   return async ({ task, context }) => {
-    const response = await provider.complete({
+    context.budget?.beforeCall();
+    const slice = contextSlice(context.project, agent, task);
+    const response = await provider.complete(cachedRequest(`specialist:${agent}`, slice, {
       system: [
         `You are the DomoView ${agent} specialist.`,
         'Use propose_operations exactly once and do not modify another domain.',
         `Allowed operation types: ${[...ALLOWED[agent]].join(', ')}.`,
-        `Project slice: ${JSON.stringify(contextSlice(context.project, agent, task))}`,
+        `Project slice: ${JSON.stringify(slice)}`,
       ].join('\n'),
       messages: [{ role: 'user', content: task.instruction }],
       tools: [tool(agent)],
       maxTokens: 1200,
       signal: context.signal,
-    });
+    }));
+    context.budget?.record(response.usage, provider.config?.pricing);
     const call = response.toolCalls.find(item => item.name === 'propose_operations');
     const operations = call?.input?.operations;
     if (!Array.isArray(operations) || !operations.length) {
@@ -78,4 +82,3 @@ export function createSpecialistAgent(agent, provider) {
     };
   };
 }
-

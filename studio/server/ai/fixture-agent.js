@@ -1,4 +1,5 @@
 import { estimateCost, ProviderError } from './provider.js';
+import { cachedRequest } from './context-cache.js';
 
 const UPDATE_KEYS = new Set([
   'name', 'room', 'emitters', 'lumens', 'color', 'range', 'shadow', 'bulb', 'variant',
@@ -119,7 +120,7 @@ export async function runFixtureAgent(input) {
   const context = fixtureContext(input.project, input.fixtureId);
   const history = (input.history || []).filter(message =>
     ['user', 'assistant'].includes(message?.role) && typeof message.content === 'string');
-  const request = {
+  const request = cachedRequest('fixture-agent', context, {
     system: [
       'You edit one selected DomoView light fixture.',
       'Use only the supplied tools. Never invent fixture IDs or return free-form JSON.',
@@ -133,7 +134,8 @@ export async function runFixtureAgent(input) {
     tools: toolDefinitions(input.project.rooms.map(room => room.id)),
     maxTokens: 1200,
     signal: input.signal,
-  };
+  });
+  input.budget?.beforeCall();
   let finalResponse;
   for await (const event of input.provider.stream(request)) {
     if (event.type === 'text_delta') {
@@ -147,6 +149,7 @@ export async function runFixtureAgent(input) {
   if (!finalResponse) {
     throw new ProviderError('internal', 'incomplete_response', 'Provider stream ended without a result.');
   }
+  input.budget?.record(finalResponse.usage, input.provider.config?.pricing);
   return {
     assistantText: finalResponse.text,
     operations: operationsFor(finalResponse.toolCalls, input.fixtureId),
