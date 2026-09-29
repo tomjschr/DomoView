@@ -38,10 +38,44 @@ describe('localhost Studio server', () => {
     const response = await fetch(`${base}/api/v1/capabilities`);
     assert.deepEqual(await response.json(), {
       localServer: true,
-      projectStorage: false,
+      projectStorage: true,
       ai: false,
       homeAssistant: false,
     });
+  });
+
+  test('creates, lists, reads and updates projects with revision checks', async () => {
+    const project = { version: 1, meta: { id: 'api-home', name: 'API Home' } };
+    const created = await fetch(`${base}/api/v1/projects`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ project }),
+    });
+    assert.equal(created.status, 201);
+    assert.equal((await created.json()).revision, 1);
+
+    const list = await (await fetch(`${base}/api/v1/projects`)).json();
+    assert.deepEqual(list.projects, [{ id: 'api-home', revision: 1, name: 'API Home' }]);
+
+    const loaded = await (await fetch(`${base}/api/v1/projects/api-home`)).json();
+    assert.deepEqual(loaded.project, project);
+
+    project.meta.name = 'Changed';
+    const updated = await fetch(`${base}/api/v1/projects/api-home`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ revision: 1, project }),
+    });
+    assert.equal(updated.status, 200);
+    assert.equal((await updated.json()).revision, 2);
+
+    const conflict = await fetch(`${base}/api/v1/projects/api-home`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ revision: 1, project }),
+    });
+    assert.equal(conflict.status, 409);
+    assert.equal((await conflict.json()).error, 'revision_conflict');
   });
 
   test('serves the built Studio shell', async () => {

@@ -7,6 +7,9 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { projectApi } from './api/projects.js';
+import { ProjectStore } from './projects/store.js';
+
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const STUDIO_ROOT = path.join(ROOT, 'dist', 'studio');
 const VERSION = JSON.parse(
@@ -26,13 +29,14 @@ const TYPES = {
   '.webp': 'image/webp',
 };
 
-function json(response, status, body) {
+function json(response, status, body, headers = {}) {
   response.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
     'x-content-type-options': 'nosniff',
+    ...headers,
   });
-  response.end(JSON.stringify(body));
+  response.end(body == null ? '' : JSON.stringify(body));
 }
 
 function allowedHost(host) {
@@ -81,6 +85,7 @@ export async function createLocalStudioServer(options = {}) {
     process.env.DOMOVIEW_WORKSPACE ||
     path.join(process.cwd(), '.domoview-workspace'));
   await mkdir(workspace, { recursive: true });
+  const projects = await new ProjectStore(workspace).init();
 
   const server = createServer(async (request, response) => {
     if (!allowedHost(request.headers.host)) {
@@ -109,10 +114,15 @@ export async function createLocalStudioServer(options = {}) {
       }
       json(response, 200, {
         localServer: true,
-        projectStorage: false,
+        projectStorage: true,
         ai: false,
         homeAssistant: false,
       });
+      return;
+    }
+    const projectResult = await projectApi(request, url, projects);
+    if (projectResult) {
+      json(response, projectResult.status, projectResult.body, projectResult.headers);
       return;
     }
     if (url.pathname.startsWith('/api/')) {
