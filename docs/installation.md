@@ -134,6 +134,12 @@ declared with `DOMOVIEW_OPENCODE_BASE_URL` and
 shows which providers and roles are configured, but the API never returns
 credentials or provider endpoint details.
 
+To use conversational fixture editing, save the project to the local
+workspace, open the **Lights** step and select a light. The AI panel streams
+the assistant response and creates typed fixture operations. The proposed
+result is rendered in the normal 2D/3D preview and must be explicitly applied
+or rejected; the provider never writes the project directly.
+
 **From your own Home Assistant.** A DomoView install contains its own copy:
 
 ```

@@ -47,6 +47,8 @@ class Studio {
     this.project = restoreProject();
     this.localProjects = new LocalProjectClient();
     this.workspaceRecord = restoreWorkspaceRecord();
+    this.fixtureChats = new Map();
+    this.aiConfigured = false;
     this.step = 'plan';
     this.build();
     this.project.subscribe(() => this.onProjectChange());
@@ -228,6 +230,11 @@ class Studio {
               { class: this.editor.tool === 'door' ? 'primary' : 'ghost' }),
           ]),
         ]);
+      case 'lights':
+        return group('Lights', [
+          el('p', { class: 'note' }, this.editor.hint()),
+          this.fixtureAgentPanel(),
+        ]);
       case 'scale':
         return group('Scale', [
           el('p', { class: 'note' },
@@ -333,6 +340,8 @@ class Studio {
     try {
       const status = await this.localProjects.providers();
       const configured = status.providers.filter(provider => provider.configured);
+      const executor = status.roles.executor;
+      this.aiConfigured = !!configured.find(provider => provider.id === executor?.provider);
       this.aiStatusNode.hidden = false;
       this.aiStatusNode.textContent = configured.length
         ? `AI: ${configured.map(provider => provider.id).join(', ')}`
@@ -340,8 +349,103 @@ class Studio {
       this.aiStatusNode.title = Object.entries(status.roles)
         .map(([role, value]) => `${role}: ${value.provider}${value.model ? ` / ${value.model}` : ''}`)
         .join('\n');
+      this.renderSide();
     } catch {
       this.aiStatusNode.hidden = true;
+    }
+  }
+
+  fixtureAgentPanel() {
+    const selected = this.editor.selected?.collection === 'fixtures'
+      ? this.project.data.fixtures.find(fixture => fixture.id === this.editor.selected.id)
+      : null;
+    if (!selected || selected.kind !== 'light') {
+      return el('div', { class: 'fixture-agent empty' }, [
+        el('strong', {}, 'AI fixture editor'),
+        el('p', { class: 'note' }, 'Select a light to edit it in conversation.'),
+      ]);
+    }
+    const chat = this.fixtureChats.get(selected.id) || [];
+    const messages = el('div', { class: 'fixture-chat-log' },
+      chat.map(message => el('div', {
+        class: `fixture-chat-message ${message.role}`,
+      }, [
+        el('strong', {}, message.role === 'user' ? 'You' : 'Assistant'),
+        el('span', {}, message.content),
+        message.meta ? el('small', {}, message.meta) : null,
+      ])));
+    const input = el('textarea', {
+      rows: 3,
+      placeholder: 'e.g. Make the light warmer, brighter and enable shadows.',
+      disabled: !this.workspaceRecord || !this.aiConfigured || !!this.fixtureAgentPending,
+    });
+    const send = button(this.fixtureAgentPending ? 'Working…' : 'Send', () =>
+      this.sendFixtureAgentMessage(selected.id, input.value), {
+      class: 'primary',
+      disabled: input.disabled,
+    });
+    input.onkeydown = event => {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        send.click();
+      }
+    };
+    const requirement = !this.workspaceRecord
+      ? 'Save this project to the local workspace first.'
+      : !this.aiConfigured
+        ? 'Configure the executor AI provider on the local server.'
+        : 'Changes become a visual proposal and are never applied automatically.';
+    return el('div', { class: 'fixture-agent' }, [
+      el('strong', {}, `AI: ${selected.name}`),
+      messages,
+      input,
+      el('div', { class: 'fixture-agent-actions' }, [
+        el('small', {}, requirement),
+        send,
+      ]),
+    ]);
+  }
+
+  async sendFixtureAgentMessage(fixtureId, message) {
+    const content = String(message || '').trim();
+    if (!content || !this.workspaceRecord || this.fixtureAgentPending) return;
+    const chat = this.fixtureChats.get(fixtureId) || [];
+    this.fixtureChats.set(fixtureId, chat);
+    chat.push({ role: 'user', content });
+    const assistant = { role: 'assistant', content: '' };
+    chat.push(assistant);
+    this.fixtureAgentPending = true;
+    this.renderSide();
+    try {
+      const result = await this.localProjects.fixtureEdit(
+        this.workspaceRecord.id,
+        this.workspaceRecord.revision,
+        fixtureId,
+        content,
+        (event, data) => {
+          if (event === 'text_delta') {
+            assistant.content += data.text;
+            const messages = this.stepPanelHost.querySelectorAll('.fixture-chat-message');
+            const current = messages[messages.length - 1]?.querySelector('span');
+            if (current) current.textContent = assistant.content;
+          }
+        },
+      );
+      const usage = result.usage || {};
+      assistant.content ||= result.assistantText || 'Prepared a proposal.';
+      assistant.meta = [
+        result.provider,
+        result.model,
+        `${(usage.inputTokens || 0) + (usage.outputTokens || 0)} tokens`,
+        usage.cacheReadTokens ? `${usage.cacheReadTokens} cached` : null,
+      ].filter(Boolean).join(' · ');
+      this.fixtureAgentPending = false;
+      await this.startProposalReview(result.proposal);
+    } catch (error) {
+      this.fixtureAgentPending = false;
+      assistant.content ||= `Could not create proposal: ${error.message}`;
+      assistant.meta = error.retryable ? 'Temporary provider error' : 'Request failed';
+      this.renderSide();
     }
   }
 
