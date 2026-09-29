@@ -100,6 +100,18 @@ run `node serve.mjs` in that folder, then open the address it prints. Needs
 [Node.js](https://nodejs.org) 20 or newer. This is the one to pick if you are
 going to be uploading files into Home Assistant anyway.
 
+From a source checkout, install dependencies once and start the local Studio
+with:
+
+```console
+npm install
+npm run studio:local
+```
+
+This builds the browser bundle, starts the local application on
+`http://127.0.0.1:8099/`, and creates a private `.domoview-workspace` beside the
+command's working directory. The server binds to the loopback interface only.
+
 **From your own Home Assistant.** A DomoView install contains its own copy:
 
 ```
