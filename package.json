@@ -14,8 +14,9 @@
     "build": "node tools/build.mjs",
     "build:card": "node tools/build.mjs card",
     "build:studio": "node tools/build.mjs studio",
+    "studio:local": "npm run build:studio && node studio/server/index.js",
     "watch": "node tools/build.mjs --watch",
-    "lint": "eslint src studio/src tools",
+    "lint": "eslint src studio/src studio/server tools",
     "validate": "node tools/pack/validate.mjs examples/demo-apartment/home.json",
     "demo": "node tools/pack/make-demo-pack.mjs",
     "test": "node --test"
