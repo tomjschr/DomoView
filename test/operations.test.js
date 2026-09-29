@@ -136,4 +136,18 @@ describe('project operations', () => {
     assert.equal(project.redo(), true);
     assert.equal(project.data.fixtures[0].color, '#112233');
   });
+
+  test('updates materials and camera through reversible singleton operations', () => {
+    const source = emptyProject();
+    const result = applyProjectOperations(source, [
+      { type: 'materials.update', changes: { wall: '#112233' } },
+      { type: 'camera.update', changes: { zoom: 1.5 } },
+    ], { validate: validateProject });
+    assert.equal(result.project.materials.wall, '#112233');
+    assert.equal(result.project.camera.zoom, 1.5);
+    assert.deepEqual(
+      applyProjectOperation(result.project, result.inverse).project,
+      source,
+    );
+  });
 });

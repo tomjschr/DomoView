@@ -57,6 +57,15 @@
           "items": { "type": "number" }
         }
       }
+    },
+    {
+      "type": "object",
+      "required": ["type", "changes"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["materials.update", "camera.update"] },
+        "changes": { "type": "object", "minProperties": 1 }
+      }
     }
   ],
   "definitions": {
@@ -66,4 +75,3 @@
     }
   }
 }
-

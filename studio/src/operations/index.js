@@ -3,6 +3,7 @@ const COLLECTIONS = {
   opening: 'openings',
   fixture: 'fixtures',
 };
+const SINGLETONS = new Set(['materials', 'camera']);
 
 const PUBLIC_ACTIONS = new Set(['add', 'update', 'remove', 'move']);
 
@@ -34,11 +35,19 @@ function operationParts(operation) {
     return { domain: 'project', action: 'restore' };
   }
   const [domain, action, extra] = String(operation.type || '').split('.');
-  if (extra || !COLLECTIONS[domain] || !PUBLIC_ACTIONS.has(action)) {
+  if (extra || (!COLLECTIONS[domain] && !SINGLETONS.has(domain)) ||
+      !PUBLIC_ACTIONS.has(action)) {
     throw new OperationError('unknown_operation', `Unknown operation "${operation.type || ''}".`);
   }
   if (action === 'move' && !['wall', 'fixture'].includes(domain)) {
     throw new OperationError('unknown_operation', `${domain}.move is not supported.`);
+  }
+  if (SINGLETONS.has(domain) && action !== 'update') {
+    throw new OperationError('unknown_operation', `${domain}.${action} is not supported.`);
+  }
+  if (SINGLETONS.has(domain)) {
+    assertKeys(operation, ['type', 'changes']);
+    return { domain, action, singleton: true };
   }
   const keys = action === 'add' ? ['type', 'value']
     : action === 'update' ? ['type', 'id', 'changes']
@@ -111,6 +120,7 @@ function move(project, domain, collection, operation) {
 
 function describe(domain, action, operation) {
   const label = domain[0].toUpperCase() + domain.slice(1);
+  if (SINGLETONS.has(domain)) return `Update ${domain}`;
   if (action === 'add') return `Add ${domain} "${operation.value.id}"`;
   if (action === 'move') return `Move ${domain} "${operation.id}" by ${operation.delta.join(', ')}`;
   return `${label} "${operation.id}": ${action}`;
@@ -133,7 +143,9 @@ export function applyProjectOperation(source, operation, options = {}) {
     };
   }
 
-  if (action === 'add') add(project, collection, operation.value);
+  if (SINGLETONS.has(domain)) {
+    updateSingleton(project, domain, operation.changes);
+  } else if (action === 'add') add(project, collection, operation.value);
   else if (action === 'update') update(project, collection, operation.id, operation.changes);
   else if (action === 'remove') remove(project, domain, collection, operation.id);
   else if (action === 'move') move(project, domain, collection, operation);
@@ -148,10 +160,20 @@ export function applyProjectOperation(source, operation, options = {}) {
     project,
     inverse: { type: 'project.restore', project: before },
     summary: describe(domain, action, operation),
-    affected: domain === 'wall' && action === 'remove'
+    affected: SINGLETONS.has(domain)
+      ? [domain]
+      : domain === 'wall' && action === 'remove'
       ? [`walls:${operation.id}`, 'openings']
       : [`${collection}:${operation.id || operation.value.id}`],
   };
+}
+
+function updateSingleton(project, domain, changes) {
+  if (!changes || typeof changes !== 'object' || Array.isArray(changes) ||
+      !Object.keys(changes).length || 'id' in changes) {
+    throw new OperationError('invalid_changes', `${domain}.update needs non-empty changes.`);
+  }
+  Object.assign(project[domain], structuredClone(changes));
 }
 
 export function applyProjectOperations(source, operations, options = {}) {
