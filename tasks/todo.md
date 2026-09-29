@@ -15,7 +15,7 @@
 
 ## Phase 2: Safe mutation protocol
 
-- [ ] Task 4: Define project schema and revisioning
+- [x] Task 4: Define project schema and revisioning
 - [ ] Task 5: Implement typed project operations
 - [ ] Task 6: Route manual fixture edits through operations
 - [ ] Task 7: Build proposal diff and approval UI

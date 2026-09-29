@@ -88,57 +88,63 @@ export async function createLocalStudioServer(options = {}) {
   const projects = await new ProjectStore(workspace).init();
 
   const server = createServer(async (request, response) => {
-    if (!allowedHost(request.headers.host)) {
-      json(response, 403, { error: 'host_not_allowed' });
-      return;
-    }
+    try {
+      if (!allowedHost(request.headers.host)) {
+        json(response, 403, { error: 'host_not_allowed' });
+        return;
+      }
 
-    const url = new URL(request.url, `http://${request.headers.host}`);
-    if (url.pathname === '/api/v1/health') {
-      if (request.method !== 'GET') {
-        response.writeHead(405, { allow: 'GET' }).end();
-        return;
-      }
-      json(response, 200, {
-        ok: true,
-        version: VERSION,
-        mode: 'localhost',
-        workspace: { configured: true },
-      });
-      return;
-    }
-    if (url.pathname === '/api/v1/capabilities') {
-      if (request.method !== 'GET') {
-        response.writeHead(405, { allow: 'GET' }).end();
-        return;
-      }
-      json(response, 200, {
-        localServer: true,
-        projectStorage: true,
-        ai: false,
-        homeAssistant: false,
-      });
-      return;
-    }
-    const projectResult = await projectApi(request, url, projects);
-    if (projectResult) {
-      if (projectResult.binary) {
-        response.writeHead(projectResult.status, {
-          'content-type': projectResult.type,
-          'cache-control': 'private, max-age=31536000, immutable',
-          'x-content-type-options': 'nosniff',
+      const url = new URL(request.url, `http://${request.headers.host}`);
+      if (url.pathname === '/api/v1/health') {
+        if (request.method !== 'GET') {
+          response.writeHead(405, { allow: 'GET' }).end();
+          return;
+        }
+        json(response, 200, {
+          ok: true,
+          version: VERSION,
+          mode: 'localhost',
+          workspace: { configured: true },
         });
-        response.end(projectResult.binary);
-      } else {
-        json(response, projectResult.status, projectResult.body, projectResult.headers);
+        return;
       }
-      return;
+      if (url.pathname === '/api/v1/capabilities') {
+        if (request.method !== 'GET') {
+          response.writeHead(405, { allow: 'GET' }).end();
+          return;
+        }
+        json(response, 200, {
+          localServer: true,
+          projectStorage: true,
+          ai: false,
+          homeAssistant: false,
+        });
+        return;
+      }
+      const projectResult = await projectApi(request, url, projects);
+      if (projectResult) {
+        if (projectResult.binary) {
+          response.writeHead(projectResult.status, {
+            'content-type': projectResult.type,
+            'cache-control': 'private, max-age=31536000, immutable',
+            'x-content-type-options': 'nosniff',
+          });
+          response.end(projectResult.binary);
+        } else {
+          json(response, projectResult.status, projectResult.body, projectResult.headers);
+        }
+        return;
+      }
+      if (url.pathname.startsWith('/api/')) {
+        json(response, 404, { error: 'api_not_found' });
+        return;
+      }
+      await serveStatic(request, response, url.pathname, studioRoot);
+    } catch (error) {
+      console.error('DomoView local server request failed:', error);
+      if (!response.headersSent) json(response, 500, { error: 'internal_error' });
+      else response.destroy();
     }
-    if (url.pathname.startsWith('/api/')) {
-      json(response, 404, { error: 'api_not_found' });
-      return;
-    }
-    await serveStatic(request, response, url.pathname, studioRoot);
   });
 
   return {

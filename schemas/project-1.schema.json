@@ -1,0 +1,265 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/tomjschr/DomoView/main/schemas/project-1.schema.json",
+  "title": "DomoView Studio Project v1",
+  "type": "object",
+  "required": [
+    "version", "meta", "plan", "level", "walls", "rooms", "openings",
+    "fixtures", "furniture", "photos", "materials", "camera"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "meta": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "author": { "type": "string" },
+        "license": { "type": "string" },
+        "description": { "type": "string" },
+        "north": { "type": "number", "minimum": -360, "maximum": 360 },
+        "version": { "type": "string" }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "required": ["image", "imageWidth", "imageHeight", "opacity", "scale", "calibration"],
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "type": ["string", "null"],
+          "pattern": "^(data:image\\/(png|jpeg|webp);base64,|asset:)"
+        },
+        "imageWidth": { "type": "number", "minimum": 0 },
+        "imageHeight": { "type": "number", "minimum": 0 },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "scale": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "calibration": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["a", "b", "metres"],
+              "additionalProperties": false,
+              "properties": {
+                "a": { "$ref": "#/definitions/vec2" },
+                "b": { "$ref": "#/definitions/vec2" },
+                "metres": { "type": "number", "exclusiveMinimum": 0 }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "level": {
+      "type": "object",
+      "required": ["height", "elevation"],
+      "additionalProperties": false,
+      "properties": {
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "elevation": { "type": "number" }
+      }
+    },
+    "walls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "a", "b", "thickness", "height", "exterior", "flip"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "a": { "$ref": "#/definitions/vec2" },
+          "b": { "$ref": "#/definitions/vec2" },
+          "thickness": { "type": "number", "exclusiveMinimum": 0 },
+          "height": { "type": "number", "exclusiveMinimum": 0 },
+          "exterior": { "type": "boolean" },
+          "flip": { "type": "boolean" }
+        }
+      }
+    },
+    "rooms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "polygon", "outdoor", "label", "climate"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "name": { "type": "string", "minLength": 1 },
+          "polygon": {
+            "type": "array",
+            "minItems": 3,
+            "items": { "$ref": "#/definitions/vec2" }
+          },
+          "outdoor": { "type": "boolean" },
+          "label": {
+            "anyOf": [
+              { "type": "null" },
+              { "$ref": "#/definitions/vec2" }
+            ]
+          },
+          "climate": { "type": "boolean" }
+        }
+      }
+    },
+    "openings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id", "type", "name", "wall", "offset", "width", "sill", "head",
+          "rooms", "mullion", "cover", "coverProfile", "coverInFront"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "type": { "enum": ["window", "door", "glass_door", "skylight"] },
+          "name": { "type": "string" },
+          "wall": { "$ref": "#/definitions/id" },
+          "offset": { "type": "number" },
+          "width": { "type": "number", "exclusiveMinimum": 0 },
+          "sill": { "type": "number" },
+          "head": { "type": "number" },
+          "rooms": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/id" }
+          },
+          "mullion": { "type": ["number", "null"] },
+          "cover": { "type": "boolean" },
+          "coverProfile": { "type": "string", "minLength": 1 },
+          "coverInFront": { "type": "boolean" }
+        }
+      }
+    },
+    "fixtures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id", "name", "kind", "room", "emitters", "lumens", "color",
+          "range", "shadow", "bulb", "variant"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "name": { "type": "string" },
+          "kind": { "type": "string", "minLength": 1 },
+          "room": { "type": ["string", "null"] },
+          "emitters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["point", "height", "type", "intensity"],
+              "additionalProperties": false,
+              "properties": {
+                "point": { "$ref": "#/definitions/vec2" },
+                "height": { "type": "number" },
+                "type": { "enum": ["point", "spot", "strip", "emissive"] },
+                "intensity": { "type": "number", "minimum": 0 },
+                "target": { "$ref": "#/definitions/vec3" },
+                "radius": { "type": "number", "minimum": 0 },
+                "angle": { "type": "number", "minimum": 0 },
+                "penumbra": { "type": "number", "minimum": 0, "maximum": 1 }
+              }
+            }
+          },
+          "lumens": { "type": "number", "minimum": 0 },
+          "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+          "range": { "type": "number", "exclusiveMinimum": 0 },
+          "shadow": { "type": "boolean" },
+          "bulb": { "type": "string" },
+          "variant": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "furniture": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "rect", "base", "top", "solid", "occluder"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "name": { "type": "string" },
+          "rect": {
+            "type": "array",
+            "minItems": 3,
+            "items": { "$ref": "#/definitions/vec2" }
+          },
+          "base": { "type": "number" },
+          "top": { "type": "number" },
+          "solid": { "type": "boolean" },
+          "occluder": { "type": "boolean" }
+        }
+      }
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "dataUrl", "width", "height", "room", "include", "note"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "name": { "type": "string" },
+          "dataUrl": {
+            "type": "string",
+            "pattern": "^(data:image\\/(png|jpeg|webp);base64,|asset:)"
+          },
+          "width": { "type": "number", "exclusiveMinimum": 0 },
+          "height": { "type": "number", "exclusiveMinimum": 0 },
+          "room": { "type": ["string", "null"] },
+          "include": { "type": "boolean" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "materials": {
+      "type": "object",
+      "required": ["wall", "floor", "ceiling", "furniture"],
+      "additionalProperties": false,
+      "properties": {
+        "wall": { "$ref": "#/definitions/color" },
+        "floor": { "$ref": "#/definitions/color" },
+        "ceiling": { "$ref": "#/definitions/color" },
+        "furniture": { "$ref": "#/definitions/color" }
+      }
+    },
+    "camera": {
+      "type": "object",
+      "required": ["azimuth", "elevation", "zoom", "clipAbove"],
+      "additionalProperties": false,
+      "properties": {
+        "azimuth": { "type": "number" },
+        "elevation": { "type": "number", "minimum": 0, "maximum": 90 },
+        "zoom": { "type": "number", "exclusiveMinimum": 0 },
+        "clipAbove": { "type": "number" }
+      }
+    }
+  },
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*$"
+    },
+    "vec2": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "number" }
+    },
+    "vec3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "type": "number" }
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    }
+  }
+}

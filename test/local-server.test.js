@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { createLocalStudioServer } from '../studio/server/index.js';
+import { emptyProject } from '../studio/src/project.js';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB';
 
@@ -47,7 +48,8 @@ describe('localhost Studio server', () => {
   });
 
   test('creates, lists, reads and updates projects with revision checks', async () => {
-    const project = { version: 1, meta: { id: 'api-home', name: 'API Home' } };
+    const project = emptyProject();
+    project.meta = { ...project.meta, id: 'api-home', name: 'API Home' };
     const created = await fetch(`${base}/api/v1/projects`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -82,12 +84,13 @@ describe('localhost Studio server', () => {
   });
 
   test('stores project images once and hydrates them when reopening', async () => {
-    const project = {
-      version: 1,
-      meta: { id: 'image-home', name: 'Image Home' },
-      plan: { image: PNG },
-      photos: [{ id: 'room', dataUrl: PNG }],
-    };
+    const project = emptyProject();
+    project.meta = { ...project.meta, id: 'image-home', name: 'Image Home' };
+    project.plan.image = PNG;
+    project.photos = [{
+      id: 'room', name: 'Room', dataUrl: PNG, width: 1, height: 1,
+      room: null, include: false, note: '',
+    }];
     const createdResponse = await fetch(`${base}/api/v1/projects`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
