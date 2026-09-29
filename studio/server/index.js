@@ -8,6 +8,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { projectApi } from './api/projects.js';
+import { ProposalStore } from './projects/proposals.js';
 import { ProjectStore } from './projects/store.js';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
@@ -86,6 +87,7 @@ export async function createLocalStudioServer(options = {}) {
     path.join(process.cwd(), '.domoview-workspace'));
   await mkdir(workspace, { recursive: true });
   const projects = await new ProjectStore(workspace).init();
+  const proposals = await new ProposalStore(workspace, projects).init();
 
   const server = createServer(async (request, response) => {
     try {
@@ -121,7 +123,7 @@ export async function createLocalStudioServer(options = {}) {
         });
         return;
       }
-      const projectResult = await projectApi(request, url, projects);
+      const projectResult = await projectApi(request, url, projects, proposals);
       if (projectResult) {
         if (projectResult.binary) {
           response.writeHead(projectResult.status, {

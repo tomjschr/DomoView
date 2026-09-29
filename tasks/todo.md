@@ -18,13 +18,13 @@
 - [x] Task 4: Define project schema and revisioning
 - [x] Task 5: Implement typed project operations
 - [x] Task 6: Route manual fixture edits through operations
-- [ ] Task 7: Build proposal diff and approval UI
+- [x] Task 7: Build proposal diff and approval UI
 
 ### Checkpoint B
 
-- [ ] Manual and proposed edits share one mutation path
-- [ ] Drafts show structural and visual diffs
-- [ ] Stale or invalid proposals cannot apply
+- [x] Manual and proposed edits share one mutation path
+- [x] Drafts show structural and visual diffs
+- [x] Stale or invalid proposals cannot apply
 
 ## Phase 3: Single-agent conversation
 

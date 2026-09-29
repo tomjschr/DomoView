@@ -110,6 +110,63 @@ describe('localhost Studio server', () => {
     assert.equal(reopened.project.photos[0].dataUrl, PNG);
   });
 
+  test('creates, partially applies and closes project proposals', async () => {
+    const project = emptyProject();
+    project.meta = { ...project.meta, id: 'proposal-home', name: 'Proposal Home' };
+    project.fixtures.push({
+      id: 'light_1', name: 'Light', kind: 'light', room: null,
+      emitters: [{ point: [1, 1], height: 2.4, type: 'point', intensity: 1 }],
+      lumens: 600, color: '#ffdda4', range: 6, shadow: false,
+      bulb: 'glow', variant: null,
+    });
+    await fetch(`${base}/api/v1/projects`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ project }),
+    });
+
+    const proposedResponse = await fetch(`${base}/api/v1/projects/proposal-home/proposals`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        revision: 1,
+        operations: [
+          { type: 'fixture.update', id: 'light_1', changes: { color: '#112233' } },
+          { type: 'fixture.update', id: 'light_1', changes: { shadow: true } },
+        ],
+      }),
+    });
+    assert.equal(proposedResponse.status, 201);
+    const proposal = await proposedResponse.json();
+    assert.equal(proposal.status, 'pending');
+    assert.equal(proposal.draft.fixtures[0].color, '#112233');
+
+    const appliedResponse = await fetch(
+      `${base}/api/v1/projects/proposal-home/proposals/${proposal.id}/apply`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ indexes: [1] }),
+      },
+    );
+    assert.equal(appliedResponse.status, 200);
+    const applied = await appliedResponse.json();
+    assert.equal(applied.project.revision, 2);
+    assert.equal(applied.project.project.fixtures[0].color, '#ffdda4');
+    assert.equal(applied.project.project.fixtures[0].shadow, true);
+
+    const repeat = await fetch(
+      `${base}/api/v1/projects/proposal-home/proposals/${proposal.id}/apply`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      },
+    );
+    assert.equal(repeat.status, 400);
+    assert.equal((await repeat.json()).error, 'proposal_closed');
+  });
+
   test('serves the built Studio shell', async () => {
     const response = await fetch(`${base}/`);
     assert.equal(response.status, 200);

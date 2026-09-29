@@ -7,6 +7,7 @@
 
 import { Project, projectStatus, slugify } from './project.js';
 import { LocalProjectClient } from './project-client.js';
+import { applyProjectOperations } from './operations/index.js';
 import { Viewport } from './viewport.js';
 import { PlanRenderer } from './render2d.js';
 import { Editor } from './editor.js';
@@ -93,6 +94,12 @@ class Studio {
               class: 'ghost', hidden: true,
             });
             return this.saveWorkspaceButton;
+          })(),
+          (() => {
+            this.reviewOperationsButton = button('Review operations…', () => this.reviewOperations(), {
+              class: 'ghost', hidden: true,
+            });
+            return this.reviewOperationsButton;
           })(),
           button('Undo', () => this.project.undo(), { class: 'ghost', title: 'Ctrl+Z' }),
           button('Redo', () => this.project.redo(), { class: 'ghost', title: 'Ctrl+Shift+Z' }),
@@ -318,6 +325,7 @@ class Studio {
     if (!await this.localProjects.available()) return;
     this.openWorkspaceButton.hidden = false;
     this.saveWorkspaceButton.hidden = false;
+    this.reviewOperationsButton.hidden = false;
   }
 
   onProjectChange() {
@@ -327,7 +335,7 @@ class Studio {
     this.draw();
     this.renderSide();
     this.preview.markStale();
-    this.persist();
+    if (!this.suspendPersist) this.persist();
   }
 
   persist() {
@@ -415,7 +423,7 @@ class Studio {
     localStorage.setItem(WORKSPACE_KEY, JSON.stringify(record));
   }
 
-  async replaceProject(project) {
+  async replaceProject(project, options = {}) {
     this.project = project;
     this.editor.project = project;
     this.preview.project = project;
@@ -424,7 +432,128 @@ class Studio {
     await this.loadBackdrop();
     this.preview.markStale();
     this.renderSide();
-    this.persist();
+    if (options.persist !== false) this.persist();
+  }
+
+  async reviewOperations() {
+    if (!this.workspaceRecord) {
+      toast('Save the project to the local workspace before creating a proposal.', 'warn');
+      return;
+    }
+    const example = JSON.stringify([{
+      type: 'fixture.update',
+      id: this.project.data.fixtures[0]?.id || 'fixture_id',
+      changes: { shadow: true },
+    }], null, 2);
+    const input = window.prompt('Paste a JSON array of typed project operations:', example);
+    if (!input) return;
+    try {
+      const operations = JSON.parse(input);
+      const proposal = await this.localProjects.propose(
+        this.workspaceRecord.id,
+        this.workspaceRecord.revision,
+        operations,
+      );
+      this.startProposalReview(proposal);
+    } catch (error) {
+      toast(`Could not create proposal: ${error.message}`, 'error');
+    }
+  }
+
+  async startProposalReview(proposal) {
+    this.activeProposal = proposal;
+    this.proposalBaseProject = this.project;
+    this.proposalSelection = new Set(proposal.operations.map((_, index) => index));
+    this.suspendPersist = true;
+    this.root.classList.add('reviewing');
+    await this.refreshProposalPreview();
+    this.renderProposalBar();
+  }
+
+  async refreshProposalPreview() {
+    const indexes = [...this.proposalSelection].sort((a, b) => a - b);
+    const operations = indexes.map(index => this.activeProposal.operations[index]);
+    const data = operations.length
+      ? applyProjectOperations(this.proposalBaseProject.data, operations).project
+      : structuredClone(this.proposalBaseProject.data);
+    await this.replaceProject(new Project(data), { persist: false });
+  }
+
+  renderProposalBar() {
+    this.proposalBar?.remove();
+    const rows = this.activeProposal.summaries.map((summary, index) => {
+      const input = el('input', {
+        type: 'checkbox',
+        checked: this.proposalSelection.has(index),
+      });
+      input.onchange = async () => {
+        if (input.checked) this.proposalSelection.add(index);
+        else this.proposalSelection.delete(index);
+        apply.disabled = !this.proposalSelection.size;
+        await this.refreshProposalPreview();
+      };
+      return el('label', { class: 'proposal-operation' }, [input, el('span', {}, summary)]);
+    });
+    const apply = button('Apply selected', () => this.applyActiveProposal(), {
+      class: 'primary',
+      disabled: !this.proposalSelection.size,
+    });
+    this.proposalBar = el('aside', { class: 'proposal-review' }, [
+      el('strong', {}, 'Proposal preview'),
+      el('span', { class: 'proposal-affected' },
+        `Affected: ${this.activeProposal.affected.join(', ')}`),
+      el('div', { class: 'proposal-operations' }, rows),
+      el('div', { class: 'proposal-actions' }, [
+        apply,
+        button('Reject', () => this.rejectActiveProposal(), { class: 'danger' }),
+      ]),
+    ]);
+    document.body.append(this.proposalBar);
+  }
+
+  async applyActiveProposal() {
+    try {
+      const result = await this.localProjects.applyProposal(
+        this.workspaceRecord.id,
+        this.activeProposal.id,
+        [...this.proposalSelection],
+      );
+      const project = Project.fromJSON(JSON.stringify(result.project.project));
+      this.finishProposalReview();
+      this.setWorkspaceRecord({
+        id: result.project.id,
+        revision: result.project.revision,
+      });
+      await this.replaceProject(project);
+      toast(`Applied proposal as revision ${result.project.revision}.`, 'ok');
+    } catch (error) {
+      toast(`Could not apply proposal: ${error.message}`, 'error');
+    }
+  }
+
+  async rejectActiveProposal() {
+    try {
+      await this.localProjects.rejectProposal(
+        this.workspaceRecord.id,
+        this.activeProposal.id,
+      );
+      const original = this.proposalBaseProject;
+      this.finishProposalReview();
+      await this.replaceProject(original);
+      toast('Proposal rejected. The project was not changed.', 'info');
+    } catch (error) {
+      toast(`Could not reject proposal: ${error.message}`, 'error');
+    }
+  }
+
+  finishProposalReview() {
+    this.proposalBar?.remove();
+    this.proposalBar = null;
+    this.activeProposal = null;
+    this.proposalBaseProject = null;
+    this.proposalSelection = null;
+    this.suspendPersist = false;
+    this.root.classList.remove('reviewing');
   }
 
   // -- export ---------------------------------------------------------------
