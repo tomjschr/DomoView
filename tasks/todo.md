@@ -28,7 +28,7 @@
 
 ## Phase 3: Single-agent conversation
 
-- [ ] Task 8: Add secure provider configuration
+- [x] Task 8: Add secure provider configuration
 - [ ] Task 9: Implement Anthropic/OpenAI provider contract
 - [ ] Task 10: Add conversational fixture-edit agent
 - [ ] Task 11: Persist sessions and compact context

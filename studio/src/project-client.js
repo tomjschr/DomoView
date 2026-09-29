@@ -26,6 +26,10 @@ export class LocalProjectClient {
     }
   }
 
+  providers() {
+    return apiJson(`${this.base}/api/v1/providers`);
+  }
+
   list() {
     return apiJson(`${this.base}/api/v1/projects`).then(result => result.projects);
   }

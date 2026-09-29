@@ -78,6 +78,10 @@ class Studio {
         el('div', { class: 'brand' }, [
           el('strong', {}, 'DomoView Studio'),
           el('span', { class: 'version' }, STUDIO_VERSION),
+          (() => {
+            this.aiStatusNode = el('span', { class: 'ai-status', hidden: true });
+            return this.aiStatusNode;
+          })(),
         ]),
         el('div', { class: 'topbar-actions' }, [
           button('New', () => this.newProject(), { class: 'ghost' }),
@@ -326,6 +330,19 @@ class Studio {
     this.openWorkspaceButton.hidden = false;
     this.saveWorkspaceButton.hidden = false;
     this.reviewOperationsButton.hidden = false;
+    try {
+      const status = await this.localProjects.providers();
+      const configured = status.providers.filter(provider => provider.configured);
+      this.aiStatusNode.hidden = false;
+      this.aiStatusNode.textContent = configured.length
+        ? `AI: ${configured.map(provider => provider.id).join(', ')}`
+        : 'AI: not configured';
+      this.aiStatusNode.title = Object.entries(status.roles)
+        .map(([role, value]) => `${role}: ${value.provider}${value.model ? ` / ${value.model}` : ''}`)
+        .join('\n');
+    } catch {
+      this.aiStatusNode.hidden = true;
+    }
   }
 
   onProjectChange() {
