@@ -17,7 +17,14 @@ describe('localhost Studio server', () => {
 
   before(async () => {
     workspace = await mkdtemp(path.join(os.tmpdir(), 'domoview-server-'));
-    app = await createLocalStudioServer({ port: 0, workspace });
+    app = await createLocalStudioServer({
+      port: 0,
+      workspace,
+      env: {
+        ANTHROPIC_API_KEY: 'server-only-test-secret',
+        DOMOVIEW_ANTHROPIC_MODEL: 'test-model',
+      },
+    });
     const address = await app.listen();
     base = `http://127.0.0.1:${address.port}`;
   });
@@ -42,9 +49,22 @@ describe('localhost Studio server', () => {
     assert.deepEqual(await response.json(), {
       localServer: true,
       projectStorage: true,
-      ai: false,
+      ai: true,
       homeAssistant: false,
     });
+  });
+
+  test('reports provider status without returning secrets', async () => {
+    const response = await fetch(`${base}/api/v1/providers`);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const anthropic = body.providers.find(provider => provider.id === 'anthropic');
+    assert.deepEqual(anthropic, {
+      id: 'anthropic',
+      configured: true,
+      model: 'test-model',
+    });
+    assert.equal(JSON.stringify(body).includes('server-only-test-secret'), false);
   });
 
   test('creates, lists, reads and updates projects with revision checks', async () => {

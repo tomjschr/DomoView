@@ -26,4 +26,5 @@ desktop.ini
 # Scratch
 /tmp/
 /scratch/
+.domoview-workspace/
 *.blend1

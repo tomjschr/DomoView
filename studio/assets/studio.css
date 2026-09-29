@@ -47,6 +47,13 @@ html, body {
 .brand { display: flex; align-items: baseline; gap: 8px; }
 .brand strong { font-size: 15px; letter-spacing: .01em; }
 .version { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.ai-status {
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 10px;
+}
 .topbar-actions { margin-left: auto; display: flex; gap: 7px; flex-wrap: wrap; }
 
 button {

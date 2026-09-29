@@ -117,6 +117,23 @@ of typed DomoView operations, renders the draft in the normal plan/3D preview,
 and applies only the operations you explicitly select. This review path is also
 the safety boundary used by the upcoming AI providers.
 
+Provider credentials belong to the local server process, never to a project or
+browser storage. For example:
+
+```powershell
+$env:ANTHROPIC_API_KEY = '...'
+$env:DOMOVIEW_ANTHROPIC_MODEL = 'your-model-id'
+npm run studio:local
+```
+
+OpenAI uses `OPENAI_API_KEY` and `DOMOVIEW_OPENAI_MODEL`. OpenCode can be
+declared with `DOMOVIEW_OPENCODE_BASE_URL` and
+`DOMOVIEW_OPENCODE_MODEL`. Role-specific overrides use
+`DOMOVIEW_ORCHESTRATOR_PROVIDER`, `DOMOVIEW_EXECUTOR_PROVIDER`,
+`DOMOVIEW_VISION_PROVIDER` and corresponding `_MODEL` variables. The Studio
+shows which providers and roles are configured, but the API never returns
+credentials or provider endpoint details.
+
 **From your own Home Assistant.** A DomoView install contains its own copy:
 
 ```

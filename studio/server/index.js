@@ -8,6 +8,8 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { projectApi } from './api/projects.js';
+import { providerApi } from './api/providers.js';
+import { loadAIConfig } from './ai/config.js';
 import { ProposalStore } from './projects/proposals.js';
 import { ProjectStore } from './projects/store.js';
 
@@ -86,6 +88,10 @@ export async function createLocalStudioServer(options = {}) {
     process.env.DOMOVIEW_WORKSPACE ||
     path.join(process.cwd(), '.domoview-workspace'));
   await mkdir(workspace, { recursive: true });
+  const aiConfig = options.aiConfig || await loadAIConfig({
+    workspace,
+    env: options.env || process.env,
+  });
   const projects = await new ProjectStore(workspace).init();
   const proposals = await new ProposalStore(workspace, projects).init();
 
@@ -118,12 +124,17 @@ export async function createLocalStudioServer(options = {}) {
         json(response, 200, {
           localServer: true,
           projectStorage: true,
-          ai: false,
+          ai: Object.values(aiConfig.providers).some(provider => provider.configured),
           homeAssistant: false,
         });
         return;
       }
-      const projectResult = await projectApi(request, url, projects, proposals);
+        const providerResult = providerApi(request, url, aiConfig);
+        if (providerResult) {
+          json(response, providerResult.status, providerResult.body, providerResult.headers);
+          return;
+        }
+        const projectResult = await projectApi(request, url, projects, proposals);
       if (projectResult) {
         if (projectResult.binary) {
           response.writeHead(projectResult.status, {
