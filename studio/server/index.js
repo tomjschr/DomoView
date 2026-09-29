@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { projectApi } from './api/projects.js';
 import { providerApi } from './api/providers.js';
+import { fixtureAgentApi } from './api/fixture-agent.js';
 import { loadAIConfig } from './ai/config.js';
 import { ProposalStore } from './projects/proposals.js';
 import { ProjectStore } from './projects/store.js';
@@ -129,6 +130,12 @@ export async function createLocalStudioServer(options = {}) {
         });
         return;
       }
+      if (await fixtureAgentApi(request, url, response, {
+        aiConfig,
+        projects,
+        proposals,
+        providerFactory: options.providerFactory,
+      })) return;
         const providerResult = providerApi(request, url, aiConfig);
         if (providerResult) {
           json(response, providerResult.status, providerResult.body, providerResult.headers);
