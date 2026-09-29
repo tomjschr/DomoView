@@ -171,7 +171,7 @@ button.attention { box-shadow: 0 0 0 2px #4ecfae66; }
 .field-label { font-size: 12px; color: var(--muted); }
 .field small { color: var(--muted); font-size: 11px; opacity: .85; }
 
-input[type=text], input[type=number], select {
+input[type=text], input[type=number], select, textarea {
   width: 100%;
   padding: 7px 9px;
   border-radius: 8px;
@@ -181,7 +181,8 @@ input[type=text], input[type=number], select {
   font: inherit;
   font-size: 13px;
 }
-input[type=text]:focus-visible, input[type=number]:focus-visible, select:focus-visible {
+input[type=text]:focus-visible, input[type=number]:focus-visible, select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 1px;
 }
 input[type=range] { width: 100%; accent-color: var(--accent); }
@@ -208,6 +209,40 @@ input.file {
 
 .panel-actions, .preview-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
 .preview-controls { display: grid; gap: 4px; }
+
+.fixture-agent {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.fixture-agent textarea { resize: vertical; min-height: 68px; }
+.fixture-chat-log {
+  display: grid;
+  gap: 6px;
+  max-height: 210px;
+  overflow-y: auto;
+}
+.fixture-chat-message {
+  display: grid;
+  gap: 2px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: #0b1318;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+.fixture-chat-message.user { border-left: 2px solid var(--accent); }
+.fixture-chat-message.assistant { border-left: 2px solid var(--muted); }
+.fixture-chat-message small { color: var(--muted); font-size: 10px; }
+.fixture-agent-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+.fixture-agent-actions small { color: var(--muted); font-size: 10px; }
 
 .emitters { display: grid; gap: 6px; }
 .emitter { display: grid; grid-template-columns: auto 1fr 1fr auto; gap: 6px; align-items: center; }
