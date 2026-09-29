@@ -10,6 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { projectApi } from './api/projects.js';
 import { providerApi } from './api/providers.js';
 import { fixtureAgentApi } from './api/fixture-agent.js';
+import { homeAssistantApi } from './api/ha.js';
+import { HomeAssistantClient } from './ha/client.js';
 import { loadAIConfig } from './ai/config.js';
 import { SessionStore } from './ai/sessions.js';
 import { ProposalStore } from './projects/proposals.js';
@@ -97,6 +99,10 @@ export async function createLocalStudioServer(options = {}) {
   const projects = await new ProjectStore(workspace).init();
   const proposals = await new ProposalStore(workspace, projects).init();
   const sessions = await new SessionStore(workspace).init();
+  const homeAssistant = options.homeAssistant || new HomeAssistantClient({
+    url: options.env?.DOMOVIEW_HA_URL || process.env.DOMOVIEW_HA_URL,
+    token: options.env?.DOMOVIEW_HA_TOKEN || process.env.DOMOVIEW_HA_TOKEN,
+  });
 
   const server = createServer(async (request, response) => {
     try {
@@ -128,7 +134,7 @@ export async function createLocalStudioServer(options = {}) {
           localServer: true,
           projectStorage: true,
           ai: Object.values(aiConfig.providers).some(provider => provider.configured),
-          homeAssistant: false,
+          homeAssistant: homeAssistant.configured(),
         });
         return;
       }
@@ -139,6 +145,11 @@ export async function createLocalStudioServer(options = {}) {
         sessions,
         providerFactory: options.providerFactory,
       })) return;
+        const haResult = await homeAssistantApi(request, url, homeAssistant);
+        if (haResult) {
+          json(response, haResult.status, haResult.body, haResult.headers);
+          return;
+        }
         const providerResult = providerApi(request, url, aiConfig);
         if (providerResult) {
           json(response, providerResult.status, providerResult.body, providerResult.headers);
