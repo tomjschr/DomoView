@@ -7,6 +7,8 @@ import path from 'node:path';
 
 import { createLocalStudioServer } from '../studio/server/index.js';
 
+const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB';
+
 describe('localhost Studio server', () => {
   let app;
   let base;
@@ -51,6 +53,7 @@ describe('localhost Studio server', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ project }),
     });
+
     assert.equal(created.status, 201);
     assert.equal((await created.json()).revision, 1);
 
@@ -76,6 +79,32 @@ describe('localhost Studio server', () => {
     });
     assert.equal(conflict.status, 409);
     assert.equal((await conflict.json()).error, 'revision_conflict');
+  });
+
+  test('stores project images once and hydrates them when reopening', async () => {
+    const project = {
+      version: 1,
+      meta: { id: 'image-home', name: 'Image Home' },
+      plan: { image: PNG },
+      photos: [{ id: 'room', dataUrl: PNG }],
+    };
+    const createdResponse = await fetch(`${base}/api/v1/projects`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ project }),
+    });
+    const created = await createdResponse.json();
+    assert.match(created.project.plan.image, /^asset:/);
+    assert.equal(created.project.photos[0].dataUrl, created.project.plan.image);
+
+    const name = created.project.plan.image.slice('asset:'.length);
+    const asset = await fetch(`${base}/api/v1/projects/image-home/assets/${name}`);
+    assert.equal(asset.status, 200);
+    assert.equal(asset.headers.get('content-type'), 'image/png');
+
+    const reopened = await (await fetch(`${base}/api/v1/projects/image-home`)).json();
+    assert.equal(reopened.project.plan.image, PNG);
+    assert.equal(reopened.project.photos[0].dataUrl, PNG);
   });
 
   test('serves the built Studio shell', async () => {

@@ -8,6 +8,8 @@ import {
   ProjectStore, ProjectStoreError, projectId,
 } from '../studio/server/projects/store.js';
 
+const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB';
+
 describe('project store', () => {
   let root;
   let store;
@@ -53,5 +55,18 @@ describe('project store', () => {
       store.create(project),
       error => error instanceof ProjectStoreError && error.code === 'exists',
     );
+  });
+
+  test('stores images as assets but hydrates them for the browser', async () => {
+    const project = {
+      version: 1,
+      meta: { id: 'photos' },
+      plan: { image: PNG },
+      photos: [{ id: 'room', dataUrl: PNG }],
+    };
+    const created = await store.create(project);
+    assert.match(created.project.plan.image, /^asset:/);
+    assert.equal(created.project.photos[0].dataUrl, created.project.plan.image);
+    assert.deepEqual((await store.getHydrated('photos')).project, project);
   });
 });

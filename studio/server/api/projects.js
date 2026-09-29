@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer';
 
+import { AssetStoreError } from '../projects/assets.js';
 import { ProjectStoreError } from '../projects/store.js';
 
 const MAX_PROJECT_BYTES = 25 * 1024 * 1024;
@@ -33,11 +34,21 @@ function errorStatus(code) {
 }
 
 export async function projectApi(request, url, store) {
+  const assetMatch = /^\/api\/v1\/projects\/([^/]+)\/assets\/([a-f0-9]{64}\.(?:jpg|png|webp))$/
+    .exec(url.pathname);
   const collection = url.pathname === '/api/v1/projects';
   const match = /^\/api\/v1\/projects\/([^/]+)$/.exec(url.pathname);
-  if (!collection && !match) return null;
+  if (!collection && !match && !assetMatch) return null;
 
   try {
+    if (assetMatch && request.method === 'GET') {
+      const asset = await store.getAsset(
+        decodeURIComponent(assetMatch[1]),
+        `asset:${assetMatch[2]}`,
+      );
+      return { status: 200, binary: asset.data, type: asset.type };
+    }
+    if (assetMatch) return { status: 405, headers: { allow: 'GET' }, body: null };
     if (collection && request.method === 'GET') {
       return { status: 200, body: { projects: await store.list() } };
     }
@@ -49,7 +60,7 @@ export async function projectApi(request, url, store) {
       };
     }
     if (match && request.method === 'GET') {
-      return { status: 200, body: await store.get(decodeURIComponent(match[1])) };
+      return { status: 200, body: await store.getHydrated(decodeURIComponent(match[1])) };
     }
     if (match && request.method === 'PUT') {
       const input = await readJson(request);
@@ -60,9 +71,9 @@ export async function projectApi(request, url, store) {
     }
     return { status: 405, headers: { allow: collection ? 'GET, POST' : 'GET, PUT' }, body: null };
   } catch (error) {
-    if (!(error instanceof ProjectStoreError)) throw error;
+    if (!(error instanceof ProjectStoreError) && !(error instanceof AssetStoreError)) throw error;
     return {
-      status: errorStatus(error.code),
+      status: error.code === 'asset_not_found' ? 404 : errorStatus(error.code),
       body: { error: error.code, message: error.message },
     };
   }
