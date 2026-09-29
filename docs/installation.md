@@ -179,6 +179,21 @@ unsupported instead of silently emulating them. A manual smoke test is:
 opencode run --format json "Reply with: DomoView OpenCode ready"
 ```
 
+## Home Assistant app
+
+The repository also contains an Ingress-enabled Home Assistant app under
+`addon/domoview-studio`, alongside the root `hacs.json` used by the card. Add
+`https://github.com/tomjschr/DomoView` as an app repository in Home Assistant
+and install **DomoView Studio**. The app uses `SUPERVISOR_TOKEN` for Core API
+access and mounts `/config` for reviewed pack installation; provider keys stay
+in Supervisor-managed app options.
+
+For a manual container build, use the add-on directory as the context:
+
+```powershell
+docker build -t domoview-studio addon\domoview-studio
+```
+
 **From your own Home Assistant.** A DomoView install contains its own copy:
 
 ```

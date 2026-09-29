@@ -67,12 +67,12 @@
 ## Phase 6: Additional providers and packaging
 
 - [x] Task 19: Complete OpenCode compatibility spike
-- [ ] Task 20: Package the server as a Home Assistant app
-- [ ] Task 21: Add bounded vision suggestions
+- [x] Task 20: Package the server as a Home Assistant app
+- [x] Task 21: Add bounded vision suggestions
 
 ### Final checkpoint
 
-- [ ] Localhost editor and HACS card remain separate products
-- [ ] Anthropic, OpenAI and OpenCode share one provider contract
-- [ ] AI edits are typed, validated, previewed and reversible
-- [ ] Full tests, lint and production builds pass
+- [x] Localhost editor and HACS card remain separate products
+- [x] Anthropic, OpenAI and OpenCode share one provider contract
+- [x] AI edits are typed, validated, previewed and reversible
+- [x] Full tests, lint and production builds pass

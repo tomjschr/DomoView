@@ -5,10 +5,24 @@ import { parseSse } from '../sse.js';
 
 function bodyFor(request, config, stream) {
   validateProviderRequest(request);
+  const input = request.messages.map((message, index) => {
+    if (message.role !== 'user' || index !== request.messages.length - 1 ||
+        !request.attachments?.length) return message;
+    return {
+      role: 'user',
+      content: [
+        { type: 'input_text', text: message.content },
+        ...request.attachments.map(image => ({
+          type: 'input_image',
+          image_url: `data:${image.mediaType};base64,${image.data}`,
+        })),
+      ],
+    };
+  });
   return {
     model: request.model || config.model,
     instructions: request.system || undefined,
-    input: request.messages,
+    input,
     tools: request.tools?.map(tool => ({
       type: 'function',
       name: tool.name,
