@@ -17,6 +17,7 @@ function bodyFor(request, config, stream) {
     })),
     max_output_tokens: request.maxTokens,
     temperature: request.temperature,
+    prompt_cache_key: request.cache?.key,
     stream,
   };
 }
@@ -128,4 +129,3 @@ export class OpenAiProvider {
     }, 'openai', { signal, timeoutMs: this.config.timeoutMs });
   }
 }
-

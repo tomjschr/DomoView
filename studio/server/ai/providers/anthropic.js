@@ -5,10 +5,17 @@ import { parseSse } from '../sse.js';
 
 function bodyFor(request, config, stream) {
   validateProviderRequest(request);
+  const system = request.cache?.stableSystem && request.system
+    ? [{
+      type: 'text',
+      text: request.system,
+      cache_control: { type: 'ephemeral' },
+    }]
+    : request.system || undefined;
   return {
     model: request.model || config.model,
     max_tokens: request.maxTokens || 2048,
-    system: request.system || undefined,
+    system,
     messages: request.messages,
     tools: request.tools?.map(tool => ({
       name: tool.name,
