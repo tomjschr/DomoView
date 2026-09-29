@@ -93,9 +93,10 @@ describe('fixture agent API', () => {
     assert.match(response.headers.get('content-type'), /text\/event-stream/);
     const events = parseEvents(await response.text());
     assert.deepEqual(events.map(event => event.event), [
-      'status', 'text_delta', 'status', 'proposal',
+      'route', 'status', 'text_delta', 'status', 'proposal',
     ]);
     const result = events.at(-1).data;
+    assert.equal(result.routing.specialist, 'fixture');
     assert.match(result.sessionId, /^[a-f0-9-]{36}$/);
     assert.equal(result.usage.cacheReadTokens, 50);
     assert.equal(result.proposal.status, 'pending');
@@ -112,6 +113,7 @@ describe('fixture agent API', () => {
       `${baseUrl}/api/v1/projects/agent-project/agents/fixture-edit?fixtureId=fx_1`,
     ).then(item => item.json());
     assert.equal(resumed.session.id, result.sessionId);
+    assert.equal(resumed.session.latestRouting.reason, 'single_fixture_domain');
     assert.deepEqual(
       resumed.session.messages.map(message => message.role),
       ['user', 'assistant'],

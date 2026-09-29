@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer';
 import { FixtureAgentError, runFixtureAgent } from '../ai/fixture-agent.js';
 import { ProviderError } from '../ai/provider.js';
 import { createRoleProvider } from '../ai/providers/index.js';
+import { routeRequest } from '../ai/orchestration/router.js';
 import { ProposalError } from '../projects/proposals.js';
 import { ProjectStoreError } from '../projects/store.js';
 
@@ -104,6 +105,18 @@ export async function fixtureAgentApi(request, url, response, dependencies) {
       current.revision,
       input.sessionId,
     );
+    const routing = routeRequest({
+      message: input.message,
+      selection: { domain: 'fixture', id: input.fixtureId },
+    });
+    dependencies.sessions.recordRouting(session.id, routing);
+    writeEvent(response, 'route', routing);
+    if (routing.route !== 'specialist' || routing.specialist !== 'fixture') {
+      throw new FixtureAgentError(
+        'requires_orchestrator',
+        `Request requires orchestration (${routing.reason}).`,
+      );
+    }
     const context = dependencies.sessions.context(session.id, current.revision);
     dependencies.sessions.addMessage(session.id, 'user', input.message.trim());
     callId = dependencies.sessions.beginCall(session.id);
@@ -134,6 +147,7 @@ export async function fixtureAgentApi(request, url, response, dependencies) {
     dependencies.sessions.linkProposal(session.id, callId, proposal);
     writeEvent(response, 'proposal', {
       sessionId: session.id,
+      routing,
       assistantText: result.assistantText,
       provider: result.provider,
       model: result.model,
