@@ -169,6 +169,16 @@ Use the current prices for the configured model. Studio then shows the
 estimated USD cost beside token and cache usage for every completed turn; if
 rates are absent it explicitly displays `cost n/a`.
 
+OpenCode integration uses an isolated CLI process per request. Configure
+`DOMOVIEW_OPENCODE_COMMAND` if `opencode` is not on `PATH`, and optionally
+`DOMOVIEW_OPENCODE_MODEL`. The bridge supports text and streamed completion
+only; DomoView reports tools, vision, structured output and prompt caching as
+unsupported instead of silently emulating them. A manual smoke test is:
+
+```powershell
+opencode run --format json "Reply with: DomoView OpenCode ready"
+```
+
 **From your own Home Assistant.** A DomoView install contains its own copy:
 
 ```

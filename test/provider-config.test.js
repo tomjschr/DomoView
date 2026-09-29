@@ -22,7 +22,7 @@ describe('AI provider configuration', () => {
     await writeFile(file, JSON.stringify({
       providers: {
         anthropic: { apiKey: 'file-secret', model: 'file-model' },
-        opencode: { baseUrl: 'http://127.0.0.1:4096', model: 'local-model' },
+        opencode: { command: 'opencode', model: 'local-model' },
       },
       roles: {
         executor: { provider: 'opencode', model: 'executor-model' },
