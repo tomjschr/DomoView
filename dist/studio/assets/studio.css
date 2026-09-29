@@ -236,6 +236,7 @@ input.file {
 .fixture-chat-message.user { border-left: 2px solid var(--accent); }
 .fixture-chat-message.assistant { border-left: 2px solid var(--muted); }
 .fixture-chat-message small { color: var(--muted); font-size: 10px; }
+.fixture-agent-progress { color: var(--accent); font-size: 10px; }
 .fixture-agent-actions {
   display: flex;
   gap: 8px;
