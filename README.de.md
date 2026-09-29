@@ -84,18 +84,59 @@ Demo-Wohnung ist nicht deine, zeigt aber genau, was die Karte tut.
 ### 3. Ein Pack für die eigene Wohnung bauen
 
 **DomoView Studio** macht aus einem Grundrissbild und ein paar Raumfotos ein
-Pack. Es wird nie etwas hochgeladen, egal wie du es startest — die drei Wege
-sind dieselbe Anwendung:
+Pack. Dabei gibt es bewusst zwei getrennte Produkte:
+
+- **HACS-Karte und statisches Studio** laufen ohne Secrets im Browser. Sie
+  enthalten weder KI-Provider noch API-Key oder Home-Assistant-Token.
+- **Local-Studio-Server und Home-Assistant-App** ergänzen privaten Workspace,
+  geprüfte KI-Bearbeitung, HA-Metadaten und kontrollierte Pack-Installation.
+  Zugangsdaten bleiben ausschließlich im Serverprozess.
 
 | | |
 |---|---|
-| **Auf dem eigenen Rechner** | `domoview-studio.zip` aus dem [letzten Release](https://github.com/tomjschr/DomoView/releases) laden, entpacken, `node serve.mjs` starten. Braucht [Node.js](https://nodejs.org) 20 oder neuer. |
-| **Aus der eigenen Home-Assistant-Instanz** | `/local/domoview/studio/index.html`, sobald DomoView über HACS installiert ist. Kein zusätzlicher Download. |
-| **Gehostet** | [tomjschr.github.io/DomoView/studio/](https://tomjschr.github.io/DomoView/studio/) — ganz ohne Installation. |
+| **Local Studio mit KI und Workspace** | Repository klonen, `npm install` und `npm run studio:local` starten, dann `http://127.0.0.1:8099` öffnen. Benötigt Node.js 24 oder neuer. |
+| **Home-Assistant-App** | Dieses Repository als App-Repository hinzufügen und **DomoView Studio** installieren. Derselbe Server läuft hinter authentifiziertem Ingress und nutzt die Supervisor-API. |
+| **Statisches Studio aus HACS** | `/local/domoview/studio/index.html`; Offline-Autorentool ohne KI, Secrets und Server-Persistenz. |
+| **Gehostetes statisches Studio** | [tomjschr.github.io/DomoView/studio/](https://tomjschr.github.io/DomoView/studio/); ebenfalls ohne KI. |
 
 Doppelklick auf `index.html` funktioniert **nicht**: Browser laden keine
 ES-Module direkt vom Dateisystem. Genau deshalb bringt die lokale Variante
 einen kleinen Server mit, der nur auf localhost lauscht.
+
+### Optionale KI-Bearbeitung
+
+API-Keys landen niemals im Browser, in der Projekt-JSON oder im exportierten
+Home Pack. Sie werden nur als Umgebungsvariablen des Local Servers oder als
+Supervisor-verwaltete Optionen der Home-Assistant-App konfiguriert:
+
+```powershell
+$env:ANTHROPIC_API_KEY = '...'
+$env:DOMOVIEW_ANTHROPIC_MODEL = 'dein-anthropic-modell'
+$env:OPENAI_API_KEY = '...'
+$env:DOMOVIEW_OPENAI_MODEL = 'dein-openai-modell'
+$env:DOMOVIEW_EXECUTOR_PROVIDER = 'anthropic'
+$env:DOMOVIEW_ORCHESTRATOR_PROVIDER = 'openai'
+npm run studio:local
+```
+
+Anthropic und OpenAI unterstützen typisierte Tools, Streaming und Vision.
+OpenCode läuft im lokalen Maschinenmodus als isolierter CLI-Prozess über
+`DOMOVIEW_OPENCODE_COMMAND` und `DOMOVIEW_OPENCODE_MODEL` und meldet nicht
+unterstützte Fähigkeiten offen. Kompatible eigene Endpoints lassen sich über
+`DOMOVIEW_<PROVIDER>_BASE_URL` auswählen.
+
+Der Assistent schreibt nie direkt in ein Projekt. Deterministisches Routing
+und Spezialagenten erzeugen versionierte Operationen, der normale Validator
+baut daraus einen Entwurf, und du bestätigst den visuellen und strukturellen
+Diff ausdrücklich mit **Apply**. Vorschläge können abgelehnt oder rückgängig
+gemacht werden. Gespräche, Nutzung und Entscheidungen bleiben in der lokalen
+SQLite-Datenbank. Bilder gehen erst nach einem Dialog mit Dateiliste und deiner
+expliziten Bestätigung an einen Vision-Provider.
+
+Auch das Home-Assistant-Token bleibt serverseitig. Der Browser bekommt nur
+einen bereinigten Entitäten-/Geräte-/Bereichskatalog für deterministisches
+Matching. Details:
+**[Installation und Provider-Konfiguration](docs/installation.md)**.
 
 ![Wie DomoView zusammenhängt: aus Grundriss und Raumfotos wird im Studio ein Home Pack, das die Karte entweder live per WebGL oder aus gebackenen Bildern rendert, gesteuert von Home-Assistant-Zuständen.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
 
@@ -240,7 +281,8 @@ Packs, Fehlerberichte und Code sind alle willkommen — siehe
 npm install
 npm run build        # dist/domoview.js und dist/studio/
 npm test             # Kernmathematik, Pack-Format, Export-Pipeline
-node tools/serve.mjs # http://127.0.0.1:8099 — Karten-Demo und Studio, ohne HA
+npm run studio:local # Local Server, Workspace und optionale KI-/HA-Brücke
+node tools/serve.mjs # statische Karten-Demo und KI-freies Studio
 ```
 
 ## Credits

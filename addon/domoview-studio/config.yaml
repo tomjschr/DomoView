@@ -26,7 +26,6 @@ options:
 schema:
   anthropic_api_key: password?
   openai_api_key: password?
-  orchestrator_provider: list(anthropic|openai|opencode)
-  executor_provider: list(anthropic|openai|opencode)
-  vision_provider: list(anthropic|openai|opencode)
-
+  orchestrator_provider: list(anthropic|openai)
+  executor_provider: list(anthropic|openai)
+  vision_provider: list(anthropic|openai)

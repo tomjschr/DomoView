@@ -1,8 +1,9 @@
 # Installation
 
-DomoView is a dashboard card: a single JavaScript file registered as a Lovelace
-resource, plus a Home Pack in your `www` folder. There is no integration and
-nothing to add to `configuration.yaml`.
+DomoView's HACS runtime is a dashboard card: a single JavaScript file registered
+as a Lovelace resource, plus a Home Pack in your `www` folder. It needs no
+integration and nothing in `configuration.yaml`. The optional Local Studio
+server / Home Assistant app is a separate authoring product.
 
 Requirements: Home Assistant 2024.8 or newer, and a browser with WebGL for the
 live renderer (any browser from the last five years, including the companion
@@ -92,12 +93,14 @@ For a full-width scene, put the card alone in a **Panel** view.
 
 ## Running the Studio
 
-Three ways, all the same application, none of which upload anything:
+Choose between the secret-free static Studio and the server-backed Local
+Studio. Static authoring never contacts an AI provider. The Local Studio sends
+text or selected images only when you invoke an AI action.
 
 **On your own machine.** Download `domoview-studio.zip` from the
 [latest release](https://github.com/tomjschr/DomoView/releases), unzip it and
 run `node serve.mjs` in that folder, then open the address it prints. Needs
-[Node.js](https://nodejs.org) 20 or newer. This is the one to pick if you are
+[Node.js](https://nodejs.org) 24 or newer. This is the one to pick if you are
 going to be uploading files into Home Assistant anyway.
 
 From a source checkout, install dependencies once and start the local Studio
@@ -114,8 +117,8 @@ command's working directory. The server binds to the loopback interface only.
 Projects saved with **Save to workspace** use revision checks and store imported
 images as deduplicated local assets. **Review operations…** accepts a JSON array
 of typed DomoView operations, renders the draft in the normal plan/3D preview,
-and applies only the operations you explicitly select. This review path is also
-the safety boundary used by the upcoming AI providers.
+and applies only the operations you explicitly select. AI-generated changes use
+the same review and validation path.
 
 Provider credentials belong to the local server process, never to a project or
 browser storage. For example:
@@ -126,13 +129,29 @@ $env:DOMOVIEW_ANTHROPIC_MODEL = 'your-model-id'
 npm run studio:local
 ```
 
-OpenAI uses `OPENAI_API_KEY` and `DOMOVIEW_OPENAI_MODEL`. OpenCode can be
-declared with `DOMOVIEW_OPENCODE_BASE_URL` and
+OpenAI uses `OPENAI_API_KEY` and `DOMOVIEW_OPENAI_MODEL`. OpenCode uses an
+isolated CLI process configured with `DOMOVIEW_OPENCODE_COMMAND` and optionally
 `DOMOVIEW_OPENCODE_MODEL`. Role-specific overrides use
 `DOMOVIEW_ORCHESTRATOR_PROVIDER`, `DOMOVIEW_EXECUTOR_PROVIDER`,
 `DOMOVIEW_VISION_PROVIDER` and corresponding `_MODEL` variables. The Studio
 shows which providers and roles are configured, but the API never returns
 credentials or provider endpoint details.
+
+Complete server configuration:
+
+| Purpose | Variables |
+|---|---|
+| Anthropic | `ANTHROPIC_API_KEY` or `DOMOVIEW_ANTHROPIC_API_KEY`, `DOMOVIEW_ANTHROPIC_MODEL`, optional `DOMOVIEW_ANTHROPIC_BASE_URL` |
+| OpenAI | `OPENAI_API_KEY` or `DOMOVIEW_OPENAI_API_KEY`, `DOMOVIEW_OPENAI_MODEL`, optional `DOMOVIEW_OPENAI_BASE_URL` |
+| OpenCode (local machine only) | `DOMOVIEW_OPENCODE_COMMAND`, optional `DOMOVIEW_OPENCODE_MODEL` |
+| Agent roles | `DOMOVIEW_ORCHESTRATOR_PROVIDER`, `DOMOVIEW_EXECUTOR_PROVIDER`, `DOMOVIEW_VISION_PROVIDER` and matching `DOMOVIEW_<ROLE>_MODEL` |
+| Home Assistant bridge | `DOMOVIEW_HA_URL`, `DOMOVIEW_HA_TOKEN`; reviewed installation additionally uses `DOMOVIEW_HA_CONFIG` |
+| Server/workspace | `DOMOVIEW_HOST`, `DOMOVIEW_PORT`, `DOMOVIEW_WORKSPACE` |
+
+Instead of environment variables, provider and role settings may be stored in
+the server-only `.domoview-workspace/config/ai.json` (or a file selected with
+`DOMOVIEW_AI_CONFIG`). Do not put that file in the project, exported pack,
+`www`, browser storage or source control.
 
 To use conversational fixture editing, save the project to the local
 workspace, open the **Lights** step and select a light. The AI panel streams
@@ -186,7 +205,9 @@ The repository also contains an Ingress-enabled Home Assistant app under
 `https://github.com/tomjschr/DomoView` as an app repository in Home Assistant
 and install **DomoView Studio**. The app uses `SUPERVISOR_TOKEN` for Core API
 access and mounts `/config` for reviewed pack installation; provider keys stay
-in Supervisor-managed app options.
+in Supervisor-managed app options. The current app image exposes Anthropic and
+OpenAI roles. OpenCode remains a local-machine integration because it requires
+an independently installed CLI executable.
 
 For a manual container build, use the add-on directory as the context:
 
@@ -237,8 +258,12 @@ cache_bust: '2'
 1. Remove the card from your dashboards
 2. HACS → DomoView → ⋮ → Remove, or delete `domoview.js` and its resource entry
 3. Delete `/config/www/domoview/` if you want the packs gone too
+4. If installed, remove the **DomoView Studio** Home Assistant app and its
+   `/data/workspace`
 
-Nothing is written outside `www` and the dashboard configuration.
+The HACS card writes nothing outside `www` and dashboard configuration. The
+optional app stores projects, assets and AI sessions in its private `/data`
+volume and writes to `/config` only through the reviewed install action.
 
 ---
 

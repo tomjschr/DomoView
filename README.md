@@ -80,18 +80,23 @@ demo apartment is not your home, but it shows you exactly what the card does.
 ### 3. Build a pack for your own home
 
 **DomoView Studio** turns a floor plan image and a few room photos into a pack.
-Nothing is ever uploaded, whichever way you start it — the three below are the
-same application:
+There are two deliberately separate products:
+
+- The **HACS card and static Studio** are secret-free browser applications.
+  They contain no AI provider client, API key or Home Assistant token.
+- The **Local Studio server / Home Assistant app** adds private workspace
+  storage, reviewed AI editing, Home Assistant metadata and controlled pack
+  installation. Credentials stay in the server process.
 
 | | |
 |---|---|
-| **On your own machine** | Download `domoview-studio.zip` from the [latest release](https://github.com/tomjschr/DomoView/releases), unzip it, and run `node serve.mjs`. Needs [Node.js](https://nodejs.org) 20 or newer. |
-| **From your own Home Assistant** | `/local/domoview/studio/index.html`, once DomoView is installed through HACS. Nothing extra to download. |
-| **Hosted** | [tomjschr.github.io/DomoView/studio/](https://tomjschr.github.io/DomoView/studio/) — nothing to install at all. |
+| **Local Studio with AI and workspace storage** | Clone the repository, run `npm install` and `npm run studio:local`, then open `http://127.0.0.1:8099`. Requires Node.js 24 or newer. |
+| **Home Assistant app** | Add this repository as an app repository and install **DomoView Studio**. It runs the same server behind authenticated Ingress and uses the Supervisor API. |
+| **Static Studio from HACS** | `/local/domoview/studio/index.html`; offline authoring without AI, credentials or server persistence. |
+| **Hosted static Studio** | [tomjschr.github.io/DomoView/studio/](https://tomjschr.github.io/DomoView/studio/); also AI-free. |
 
 Double-clicking `index.html` does **not** work: browsers refuse to load ES
-modules straight off the filesystem, which is why the local option ships a
-small loopback-only server rather than a bare folder.
+modules straight off the filesystem.
 
 ![How DomoView fits together: a floor plan and room photos become a Home Pack in the Studio, which the card renders either live in WebGL or from baked images, driven by Home Assistant states.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/pipeline.svg)
 
@@ -117,6 +122,39 @@ small loopback-only server rather than a bare folder.
     **card YAML** that lists every fixture, blind, window contact and room to
     map, and your editable project file. Upload the folder into
     `/config/www/domoview/homes/<your-pack>/`.
+
+### Optional AI editing
+
+API keys are never stored in the browser, project JSON or exported Home Pack.
+Configure them only in the Local Studio server environment or in
+Supervisor-managed Home Assistant app options:
+
+```powershell
+$env:ANTHROPIC_API_KEY = '...'
+$env:DOMOVIEW_ANTHROPIC_MODEL = 'your-anthropic-model'
+$env:OPENAI_API_KEY = '...'
+$env:DOMOVIEW_OPENAI_MODEL = 'your-openai-model'
+$env:DOMOVIEW_EXECUTOR_PROVIDER = 'anthropic'
+$env:DOMOVIEW_ORCHESTRATOR_PROVIDER = 'openai'
+npm run studio:local
+```
+
+Anthropic and OpenAI support typed tools, streaming and vision. OpenCode uses
+an isolated CLI process in local-machine mode, configured with
+`DOMOVIEW_OPENCODE_COMMAND` and `DOMOVIEW_OPENCODE_MODEL`; its bridge reports
+unsupported capabilities instead of pretending to support them. Custom
+compatible endpoints can be selected with `DOMOVIEW_<PROVIDER>_BASE_URL`.
+
+The assistant never writes a project directly. Deterministic routing and
+specialist agents produce versioned operations, the normal validator builds a
+draft, and you must review the visual/structural diff before **Apply**. Changes
+can be rejected or undone. Conversations, usage and proposal decisions stay in
+the local workspace SQLite database. Images are sent to a vision provider only
+after a dialog lists the selected files and you explicitly confirm.
+
+Home Assistant credentials also stay server-side. The browser receives only a
+sanitized entity/device/area catalog for deterministic matching. See
+**[Installation and provider configuration](docs/installation.md)**.
 
 ![The example apartment rendered by the card: walls with real window and door openings, floor slabs, furniture as simple blocks, and warm pools of light under each lamp.](https://raw.githubusercontent.com/tomjschr/DomoView/main/docs/images/screenshot-studio-output.webp)
 
@@ -225,7 +263,8 @@ Packs, bug reports and code are all welcome — see
 npm install
 npm run build        # dist/domoview.js and dist/studio/
 npm test             # core maths, pack format, export pipeline
-node tools/serve.mjs # http://127.0.0.1:8099 — card demo and Studio, no HA needed
+npm run studio:local # Local Studio server, workspace and optional AI/HA bridge
+node tools/serve.mjs # static card demo and AI-free Studio
 ```
 
 ## Credits
