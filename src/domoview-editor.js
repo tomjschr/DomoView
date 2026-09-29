@@ -9,6 +9,7 @@
  */
 
 import { loadPack } from './core/pack.js';
+import { buildEntityCatalog, proposeEntityBindings } from './core/entity-matcher.js';
 import { createTranslator } from './i18n/index.js';
 import { editorStyles } from './styles-editor.js';
 
@@ -37,6 +38,8 @@ export class DomoViewCardEditor extends HTMLElement {
     this.config = {};
     this.pack = null;
     this.packError = null;
+    this.bindingSuggestions = [];
+    this.registries = {};
     this.t = createTranslator('en');
     this.open = new Set(['home', 'fixtures']);
   }
@@ -44,7 +47,10 @@ export class DomoViewCardEditor extends HTMLElement {
   setConfig(config) {
     const previous = this.config.home;
     this.config = { ...config };
-    if (this.config.home !== previous || !this.pack) this.loadPack();
+    if (this.config.home !== previous || !this.pack) {
+      this.bindingSuggestions = [];
+      this.loadPack();
+    }
     else this.render();
   }
 
@@ -52,6 +58,7 @@ export class DomoViewCardEditor extends HTMLElement {
     this._hass = hass;
     this.t = createTranslator(hass?.locale?.language || hass?.language || 'en');
     this.render();
+    this.loadRegistries(hass);
   }
 
   connectedCallback() {
@@ -100,6 +107,43 @@ export class DomoViewCardEditor extends HTMLElement {
     return Object.keys(states)
       .filter(id => !domains?.length || domains.includes(id.split('.')[0]))
       .sort();
+  }
+
+  async loadRegistries(hass) {
+    if (!hass?.callWS || this.registrySource === hass) return;
+    this.registrySource = hass;
+    try {
+      const [areas, devices, entities] = await Promise.all([
+        hass.callWS({ type: 'config/area_registry/list' }),
+        hass.callWS({ type: 'config/device_registry/list' }),
+        hass.callWS({ type: 'config/entity_registry/list' }),
+      ]);
+      if (this._hass !== hass) return;
+      this.registries = { areas, devices, entities };
+    } catch (error) {
+      console.info('DomoView: entity matching will continue without registry metadata.', error);
+      this.registries = {};
+    }
+  }
+
+  findBindingSuggestions() {
+    const catalog = buildEntityCatalog(this._hass?.states, this.registries);
+    this.bindingSuggestions = proposeEntityBindings(
+      this.pack?.fixtures.filter(fixture => fixture.kind !== 'marker') || [],
+      catalog,
+      this.config.entities || {},
+    ).filter(suggestion => suggestion.confidence === 'high');
+    this.render();
+  }
+
+  applyBindingSuggestions() {
+    if (!this.bindingSuggestions.length) return;
+    const entities = { ...(this.config.entities || {}) };
+    for (const suggestion of this.bindingSuggestions) {
+      if (!entities[suggestion.fixtureId]) entities[suggestion.fixtureId] = suggestion.entityId;
+    }
+    this.bindingSuggestions = [];
+    this.emit({ entities });
   }
 
   // -- rendering -------------------------------------------------------------
@@ -280,6 +324,36 @@ export class DomoViewCardEditor extends HTMLElement {
     const fixtures = this.pack.fixtures.filter(fixture => fixture.kind !== 'marker');
     const bound = fixtures.filter(fixture => this.config.entities?.[fixture.id]).length;
     return this.section('fixtures', t('editor.fixtures'), body => {
+      const matching = document.createElement('div');
+      matching.className = 'matching';
+      const find = document.createElement('button');
+      find.type = 'button';
+      find.className = 'action';
+      find.textContent = t('editor.findMatches');
+      find.onclick = () => this.findBindingSuggestions();
+      matching.append(find);
+
+      if (this.bindingSuggestions.length) {
+        const preview = document.createElement('div');
+        preview.className = 'match-preview';
+        preview.append(...this.bindingSuggestions.map(suggestion => {
+          const row = document.createElement('div');
+          row.textContent = `${suggestion.fixtureName} → ${suggestion.entityId} (${Math.round(suggestion.score * 100)}%)`;
+          return row;
+        }));
+        const apply = document.createElement('button');
+        apply.type = 'button';
+        apply.className = 'action primary';
+        apply.textContent = t('editor.applyMatches', { count: this.bindingSuggestions.length });
+        apply.onclick = () => this.applyBindingSuggestions();
+        matching.append(preview, apply);
+      } else {
+        const note = document.createElement('small');
+        note.textContent = t('editor.matchHint');
+        matching.append(note);
+      }
+      body.append(matching);
+
       const groups = new Map();
       for (const fixture of fixtures) {
         const key = fixture.roomName || '—';

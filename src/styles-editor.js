@@ -90,6 +90,32 @@ export function editorStyles() {
   .status.ok { background: #1d4d3f66; color: #c7ecd9; }
   .status.bad { background: #5c2b2b66; color: #f4cfc6; }
 
+  .matching { display: grid; gap: 7px; padding: 8px; border-radius: 7px; background: #0e161b66; }
+  .matching small { color: var(--secondary-text-color, #9fb3ad); font-size: 11px; }
+  .action {
+    justify-self: start;
+    padding: 6px 10px;
+    border: 1px solid var(--divider-color, #55716f);
+    border-radius: 7px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+  }
+  .action.primary {
+    border-color: var(--primary-color, #0e665b);
+    background: var(--primary-color, #0e665b);
+    color: var(--text-primary-color, #fff);
+  }
+  .match-preview {
+    display: grid;
+    gap: 3px;
+    color: var(--secondary-text-color, #b9cdc7);
+    font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    word-break: break-word;
+  }
+
   .diagnostics {
     margin: 4px 0 0;
     padding: 9px;
