@@ -22,6 +22,7 @@ import {
   el, button, group, field, askNumber, toast,
   readFileAsDataUrl, normaliseImage,
 } from './ui.js';
+import { proposeEntityBindings } from '../../src/core/entity-matcher.js';
 
 const STUDIO_VERSION = '0.1.1';
 const STORAGE_KEY = 'domoview.studio.project';
@@ -51,12 +52,46 @@ class Studio {
     this.fixtureSessions = new Map();
     this.fixtureSessionLoads = new Set();
     this.aiConfigured = false;
+    this.haAvailable = false;
+    this.bindingSuggestions = new Map();
     this.step = 'plan';
     this.build();
     this.project.subscribe(() => this.onProjectChange());
     this.setStep('plan');
     this.loadBackdrop();
     void this.initLocalServer();
+  }
+
+  async findHomeAssistantBindings() {
+    try {
+      const catalog = await this.localProjects.homeAssistantCatalog();
+      const areas = new Map(catalog.areas.map(area => [area.id, area.name]));
+      const devices = new Map(catalog.devices.map(device => [device.id, device]));
+      const entities = catalog.entities.map(entity => {
+        const areaId = entity.areaId || devices.get(entity.deviceId)?.areaId || '';
+        return {
+          entityId: entity.entityId,
+          friendlyName: entity.name,
+          areaId,
+          areaName: areas.get(areaId) || '',
+        };
+      });
+      const rooms = new Map(this.project.data.rooms.map(room => [room.id, room.name]));
+      const fixtures = this.project.data.fixtures.map(fixture => ({
+        id: fixture.id,
+        name: fixture.name,
+        room: fixture.room,
+        roomName: rooms.get(fixture.room) || '',
+        domains: fixture.kind === 'light' ? ['light', 'switch'] : [],
+      }));
+      this.bindingSuggestions = new Map(proposeEntityBindings(fixtures, entities)
+        .filter(suggestion => suggestion.confidence !== 'low')
+        .map(suggestion => [suggestion.fixtureId, suggestion]));
+      this.renderSide();
+      toast(`Found ${this.bindingSuggestions.size} deterministic HA candidates.`, 'info');
+    } catch (error) {
+      toast(`Could not load Home Assistant entities: ${error.message}`, 'error');
+    }
   }
 
   build() {
@@ -340,6 +375,8 @@ class Studio {
     this.saveWorkspaceButton.hidden = false;
     this.reviewOperationsButton.hidden = false;
     try {
+      const capabilities = await this.localProjects.capabilities();
+      this.haAvailable = capabilities.homeAssistant === true;
       const status = await this.localProjects.providers();
       const configured = status.providers.filter(provider => provider.configured);
       const executor = status.roles.executor;
@@ -402,6 +439,7 @@ class Studio {
         ? 'Configure the executor AI provider on the local server.'
         : 'Changes become a visual proposal and are never applied automatically.';
     const latestProposal = this.fixtureSessions.get(selected.id)?.latestProposal;
+    const binding = this.bindingSuggestions.get(selected.id);
     return el('div', { class: 'fixture-agent' }, [
       el('strong', {}, `AI: ${selected.name}`),
       messages,
@@ -417,6 +455,13 @@ class Studio {
           : null,
         send,
       ]),
+      this.haAvailable ? el('div', { class: 'binding-suggestion' }, [
+        button('Find HA entity', () => this.findHomeAssistantBindings(), { class: 'ghost' }),
+        binding ? el('small', {}, [
+          `${binding.entityId} · ${binding.confidence} · `,
+          `${Math.round(binding.score * 100)}% · ${binding.reasons.join(', ') || 'name similarity'}`,
+        ]) : null,
+      ]) : null,
     ]);
   }
 
