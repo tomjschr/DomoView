@@ -17,7 +17,7 @@
 
 - [x] Task 4: Define project schema and revisioning
 - [x] Task 5: Implement typed project operations
-- [ ] Task 6: Route manual fixture edits through operations
+- [x] Task 6: Route manual fixture edits through operations
 - [ ] Task 7: Build proposal diff and approval UI
 
 ### Checkpoint B

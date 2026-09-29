@@ -158,10 +158,11 @@ export function colourTargetMenu(hex, { project, selected, onDone }) {
       onDone();
     }, { class: 'ghost tiny' })),
     selected?.collection === 'fixtures' ? button('Selected lamp', () => {
-      project.commit('lamp colour', data => {
-        const fixture = data.fixtures.find(entry => entry.id === selected.id);
-        if (fixture) fixture.color = hex;
-      });
+      project.applyOperation({
+        type: 'fixture.update',
+        id: selected.id,
+        changes: { color: hex },
+      }, 'lamp colour');
       onDone();
     }, { class: 'ghost tiny' }) : null,
     button('Cancel', onDone, { class: 'ghost tiny' }),

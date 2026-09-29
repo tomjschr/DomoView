@@ -57,6 +57,15 @@ export function renderInspector(container, context) {
 }
 
 function edit(project, label, id, collection, mutate) {
+  if (collection === 'fixtures') {
+    const entry = structuredClone(project.find(collection, id));
+    if (!entry) return;
+    mutate(entry, project.data);
+    const changes = { ...entry };
+    delete changes.id;
+    project.applyOperation({ type: 'fixture.update', id, changes }, label);
+    return;
+  }
   project.commit(label, data => {
     const entry = data[collection].find(item => item.id === id);
     if (entry) mutate(entry, data);
