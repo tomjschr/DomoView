@@ -11,7 +11,9 @@ import { projectApi } from './api/projects.js';
 import { providerApi } from './api/providers.js';
 import { fixtureAgentApi } from './api/fixture-agent.js';
 import { homeAssistantApi } from './api/ha.js';
+import { installApi } from './api/install.js';
 import { HomeAssistantClient } from './ha/client.js';
+import { HomeAssistantInstaller } from './ha/install.js';
 import { loadAIConfig } from './ai/config.js';
 import { SessionStore } from './ai/sessions.js';
 import { ProposalStore } from './projects/proposals.js';
@@ -103,6 +105,9 @@ export async function createLocalStudioServer(options = {}) {
     url: options.env?.DOMOVIEW_HA_URL || process.env.DOMOVIEW_HA_URL,
     token: options.env?.DOMOVIEW_HA_TOKEN || process.env.DOMOVIEW_HA_TOKEN,
   });
+  const installer = options.installer || new HomeAssistantInstaller(
+    options.env?.DOMOVIEW_HA_CONFIG || process.env.DOMOVIEW_HA_CONFIG,
+  );
 
   const server = createServer(async (request, response) => {
     try {
@@ -145,6 +150,11 @@ export async function createLocalStudioServer(options = {}) {
         sessions,
         providerFactory: options.providerFactory,
       })) return;
+        const installResult = await installApi(request, url, installer);
+        if (installResult) {
+          json(response, installResult.status, installResult.body, installResult.headers);
+          return;
+        }
         const haResult = await homeAssistantApi(request, url, homeAssistant);
         if (haResult) {
           json(response, haResult.status, haResult.body, haResult.headers);
